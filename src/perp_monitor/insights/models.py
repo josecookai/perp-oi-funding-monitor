@@ -23,6 +23,13 @@ class VolumeTier(StrEnum):
     NOISE = "noise"
 
 
+class Bucket(StrEnum):
+    """Which dashboard page a card belongs on: liquid markets, or everything else."""
+
+    LIQUID = "liquid"  # VolumeTier.MEANINGFUL
+    ILLIQUID = "illiquid"  # VolumeTier.THIN or NOISE
+
+
 class FundingPattern(StrEnum):
     PERSISTENT = "persistent"  # most recent periods had the same sign
     SPIKE = "spike"  # the current sign is new or rare in the lookback
@@ -140,7 +147,8 @@ class TickerInsight:
     ticker: str
     market: str
     side: Side
-    rank: int
+    bucket: Bucket
+    rank: int  # within (venue, side, bucket)
     funding_8h: float
     funding_apr: float
     profile: Profile | None

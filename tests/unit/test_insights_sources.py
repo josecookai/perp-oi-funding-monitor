@@ -84,8 +84,9 @@ class TestNasdaq:
             p = nasdaq.fetch_profile(client, "FWDI", policy=NO_RETRY)
         assert p is not None and seen == ["/api/company/FWDI/company-profile"]
 
-    def test_symbol_with_dot_uses_nasdaq_form(self) -> None:
-        assert nasdaq.nasdaq_symbol("BRK.B") == "BRK/B"
+    def test_share_class_keeps_the_dot(self) -> None:
+        # /api/quote/BRK/B/... is a 404; /api/quote/BRK.B/... works (checked 2026-11-24).
+        assert nasdaq.nasdaq_symbol("BRK.B") == "BRK.B"
 
 
 class TestYahooNews:

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import TracebackType
+from typing import Literal
 
 from perp_monitor.models import MarketSnapshot, PriorPoint, Venue
 
@@ -50,6 +51,7 @@ ORDER BY r.started_at DESC LIMIT 1
 """
 LATEST_RUN_BEFORE = LATEST_RUN_TEMPLATE.format(op="<")
 LATEST_RUN_AT_OR_BEFORE = LATEST_RUN_TEMPLATE.format(op="<=")
+OLDEST_RUN_BEFORE = LATEST_RUN_BEFORE.replace("DESC", "ASC")
 
 
 def _iso(moment: datetime) -> str:
@@ -119,20 +121,27 @@ class SnapshotStore:
         return self._conn.execute(query, (_iso(cutoff), venue.value)).fetchone()
 
     def latest_prior(
-        self, venue: Venue, before: datetime, min_age_hours: float = 0.0
+        self,
+        venue: Venue,
+        before: datetime,
+        min_age_hours: float = 0.0,
+        fallback: Literal["latest", "oldest", "none"] = "latest",
     ) -> tuple[datetime, dict[str, PriorPoint]] | None:
         """The run to compare against for `venue`, with its rows keyed by market.
 
         Prefers the latest run at least `min_age_hours` older than `before`, so an ad-hoc
         run a few minutes before a scheduled one does not shrink the scheduled window.
-        Falls back to the latest earlier run if none is that old.
+        If none is that old, `fallback` picks the latest earlier run, the oldest earlier
+        run (the widest window available), or nothing.
         """
         row = None
         if min_age_hours > 0:
             old_enough = before - timedelta(hours=min_age_hours)
             row = self._latest_run(LATEST_RUN_AT_OR_BEFORE, venue, old_enough)
-        if row is None:
+        if row is None and fallback == "latest":
             row = self._latest_run(LATEST_RUN_BEFORE, venue, before)
+        elif row is None and fallback == "oldest":
+            row = self._latest_run(OLDEST_RUN_BEFORE, venue, before)
         if row is None:
             return None
         run_id, started_at = row

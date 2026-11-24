@@ -11,6 +11,7 @@ import pytest
 from perp_monitor.insights.cache import JsonCache
 from perp_monitor.insights.collect import build_insights, targets_from_report
 from perp_monitor.insights.models import (
+    Bucket,
     EarningsDate,
     Filing,
     FundingPattern,
@@ -114,15 +115,37 @@ class FakeSource:
         return tuple(FundingPoint(NOW - timedelta(hours=8 * i), 0.0) for i in range(6))
 
 
-def test_targets_skip_failed_sections_and_missing_rows() -> None:
+def test_targets_rank_within_volume_buckets_and_skip_failed_sections() -> None:
     targets = targets_from_report(REPORT)
-    keys = [(t.venue, t.ticker, t.side, t.rank) for t in targets]
+    keys = [(t.venue, t.ticker, t.side, t.bucket, t.rank) for t in targets]
     assert keys == [
-        ("binance", "FWDI", Side.NEGATIVE, 1),
-        ("binance", "MDT", Side.NEGATIVE, 2),
-        ("binance", "WDC", Side.POSITIVE, 1),
-        ("hyperliquid", "FWDI", Side.NEGATIVE, 1),
+        # FWDI ($362K OI) is thin and MDT ($67K) is noise: both illiquid.
+        ("binance", "FWDI", Side.NEGATIVE, Bucket.ILLIQUID, 1),
+        ("binance", "MDT", Side.NEGATIVE, Bucket.ILLIQUID, 2),
+        ("binance", "WDC", Side.POSITIVE, Bucket.LIQUID, 1),
+        ("hyperliquid", "FWDI", Side.NEGATIVE, Bucket.LIQUID, 1),
     ]
+
+
+def test_top_n_applies_per_bucket() -> None:
+    rows = [row(f"L{i}", f"L{i}USDT", -0.001 * (i + 1), 5e6, 5e6, 8.0) for i in range(3)] + [
+        row(f"S{i}", f"S{i}USDT", -0.01 * (i + 1), 1e5, 1e5, 8.0) for i in range(3)
+    ]
+    report = {"sections": [{"venue": "binance", "error": None, "rows": rows}]}
+    targets = targets_from_report(report, top_n=2)
+    liquid = [t.ticker for t in targets if t.bucket is Bucket.LIQUID]
+    illiquid = [t.ticker for t in targets if t.bucket is Bucket.ILLIQUID]
+    assert liquid == ["L2", "L1"]  # most negative first, even though S* are more extreme
+    assert illiquid == ["S2", "S1"]
+
+
+def test_zero_funding_is_never_a_target() -> None:
+    report = {
+        "sections": [
+            {"venue": "binance", "error": None, "rows": [row("Z", "ZUSDT", 0.0, 5e6, 5e6, 8.0)]}
+        ]
+    }
+    assert targets_from_report(report) == ()
 
 
 def test_build_insights_happy_path() -> None:

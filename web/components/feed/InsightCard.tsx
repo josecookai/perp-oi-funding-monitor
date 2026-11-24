@@ -71,7 +71,7 @@ function CatalystLinks({ item, asOf }: { item: Insight; asOf: string }) {
 
 export function InsightCard({ item, slug, asOf }: { item: Insight; slug: string; asOf: string }) {
   const bars = item.persistence.buckets.map((b) => ({ time: b.time, rate: b.rate_8h }));
-  const sideLabel = item.side === "negative" ? "负费率" : "正费率";
+  const sideLabel = `${item.bucket === "liquid" ? "量有意义" : "量没意义"} · ${item.side === "negative" ? "负费率" : "正费率"}`;
   return (
     <article data-venue={item.venue} className="border-b border-line px-4 py-4 sm:px-5">
       <header className="flex items-start gap-3">

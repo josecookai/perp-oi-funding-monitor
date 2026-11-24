@@ -25,8 +25,11 @@ TIMING = {"time-pre-market": "bmo", "time-after-hours": "amc"}
 
 
 def nasdaq_symbol(ticker: str) -> str:
-    """Nasdaq writes share classes with a slash: BRK.B -> BRK/B."""
-    return ticker.replace(".", "/")
+    """Nasdaq displays share classes as BRK/B, but its API paths take the dot form.
+
+    A slash in the path returns 404, so the ticker is passed as is.
+    """
+    return ticker
 
 
 def parse_number(raw: object) -> float | None:

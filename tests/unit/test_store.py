@@ -73,3 +73,18 @@ def test_latest_prior_prefers_a_run_at_least_min_age_old(tmp_path: Path) -> None
         # nothing old enough: fall back to the latest earlier run
         at, _ = store.latest_prior(Venue.BINANCE, before=T0 + timedelta(hours=2), min_age_hours=7)
         assert at == T0
+
+
+def test_latest_prior_fallbacks(tmp_path: Path) -> None:
+    with SnapshotStore(tmp_path / "m.db") as store:
+        store.record_run(T0, manual=False, snapshots=[snap("NVDA", oi=1)])
+        store.record_run(T0 + timedelta(hours=1), manual=False, snapshots=[snap("NVDA", oi=2)])
+        before = T0 + timedelta(hours=2)
+        assert (
+            store.latest_prior(Venue.BINANCE, before=before, min_age_hours=7, fallback="none")
+            is None
+        )
+        at, _ = store.latest_prior(Venue.BINANCE, before=before, min_age_hours=7, fallback="oldest")
+        assert at == T0
+        at, _ = store.latest_prior(Venue.BINANCE, before=before, min_age_hours=7, fallback="latest")
+        assert at == T0 + timedelta(hours=1)

@@ -10,8 +10,10 @@ change). It publishes:
 
 - **A Telegram report every 8 hours (00/08/16 UTC):** OI change for every ticker, OI gain/loss top 10, most negative
   and most positive funding top 10, and a cross-venue funding table.
-- **A dashboard, refreshed every hour:** the same data, plus a **catalyst card** for every ticker in each
-  venue's funding top 10. Each card answers five questions:
+- **A dashboard, refreshed every hour:** the same data, plus **catalyst cards** on two
+  pages. **量有意义** (home) ranks funding only among markets with OI ≥ $1M and 24h volume
+  ≥ $1M. **量没意义** ranks the rest separately. Each page shows a top 10 per venue and per
+  funding sign, and each card answers five questions:
   1. **What is this company?** Profile, sector and industry.
   2. **Is the funding skew persistent or a one-off spike?** Based on 7 days of the
      venue's own settled funding, in 8h buckets.
@@ -148,7 +150,7 @@ Set `SEC_USER_AGENT` to your own contact string.
 | Funding 8h | converted to 8h. Hyperliquid: the market's current hourly `funding` × 8. Binance: `premiumIndex.lastFundingRate`, using each symbol's interval from `/fapi/v1/fundingInfo` (8h unless listed). Rankings use this. |
 | APR | funding × periods per year, simple (not compounded) |
 | Window | actual time since the previous observation, flagged if outside `EXPECTED_WINDOW_HOURS ± WINDOW_TOLERANCE_HOURS` |
-| Previous observation | the latest stored run at least `EXPECTED − min(TOLERANCE, 15 min)` old (7h45m by default). With hourly runs that is the run from 8h earlier, and a manual run just before a scheduled one does not shrink its window. If no run is that old (the first hours after a fresh start), the latest earlier run is used and the window is flagged. |
+| Previous observation | the latest stored run at least `EXPECTED − min(TOLERANCE, 15 min)` old (7h45m by default). With hourly runs that is the run from 8h earlier, and a manual run just before a scheduled one does not shrink its window. If no run is that old (the first 8h of data), Binance uses its own OI history at now − 8h, and Hyperliquid uses the oldest stored run, which is the widest window available. The window is flagged when it is not about 8h. |
 
 Edge cases:
 - **First run.** Binance's previous OI is backfilled from `/futures/data/openInterestHist`, so 8h changes show at once. Hyperliquid has no OI history endpoint, so its OI rankings start at the second run.
@@ -259,6 +261,6 @@ Rules (constants in `src/perp_monitor/insights/analysis.py`, shown on the site's
 
 | Question | Rule |
 |---|---|
-| Volume meaningful? | noise: OI < $250K or 24h volume < $100K; meaningful: OI ≥ $1M and volume ≥ $1M; otherwise thin |
+| Volume meaningful? | noise: OI < $250K or 24h volume < $100K; meaningful: OI ≥ $1M and volume ≥ $1M; otherwise thin. Meaningful markets go on the 量有意义 page (`bucket: liquid`), thin and noise on 量没意义 (`illiquid`), and each page has its own top 10. |
 | Funding persistent? | share of 8h buckets in the last 7 days with the current sign: ≥ 60% persistent, ≤ 25% spike, else mixed; < 3 buckets: insufficient |
 | Crowded short? | short shares ÷ shares outstanding (market cap ÷ close): ≥ 15% high, ≥ 8% elevated, ≥ 4% moderate; a lower share with ≥ 7 days to cover also counts as moderate |

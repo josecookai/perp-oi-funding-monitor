@@ -1,4 +1,4 @@
-"""Build one insight card per ticker in each venue's funding top-N lists.
+"""Build insight cards: funding top-N per venue, side and volume bucket.
 
 Every data source is optional: a failure is recorded on the card (or on the bundle for
 batched sources) and the card is still built from whatever else came back.
@@ -16,12 +16,15 @@ from typing import Any, Protocol, TypeVar
 
 from perp_monitor.insights.analysis import (
     bucket_8h,
+    bucket_for,
     classify_persistence,
     short_level,
+    volume_tier,
     volume_verdict,
 )
 from perp_monitor.insights.clock import market_date
 from perp_monitor.insights.models import (
+    Bucket,
     Catalysts,
     EarningsDate,
     Filing,
@@ -43,7 +46,7 @@ NO_FILINGS: tuple[Filing, ...] = ()
 NO_HISTORY: tuple[FundingPoint, ...] = ()
 NO_EARNINGS: Mapping[str, EarningsDate] = MappingProxyType({})
 NO_SHORTS: Mapping[str, ShortInterest] = MappingProxyType({})
-RANKINGS = ((Side.NEGATIVE, "funding_negative"), (Side.POSITIVE, "funding_positive"))
+DEFAULT_TOP_N = 10
 
 
 class InsightSource(Protocol):
@@ -65,6 +68,7 @@ class Target:
     ticker: str
     market: str
     side: Side
+    bucket: Bucket
     rank: int
     funding_8h: float
     funding_apr: float
@@ -91,23 +95,45 @@ class InsightsBundle:
     errors: tuple[str, ...]
 
 
-def targets_from_report(report: Mapping[str, Any]) -> tuple[Target, ...]:
+def _row_sign_ok(row: Mapping[str, Any], side: Side) -> bool:
+    f = float(row["funding_8h"])
+    return f < 0 if side is Side.NEGATIVE else f > 0
+
+
+def targets_from_report(report: Mapping[str, Any], top_n: int | None = None) -> tuple[Target, ...]:
+    """Top-N funding per (venue, side, volume bucket), most extreme first.
+
+    Ranking inside each bucket means the liquid page shows the most extreme funding among
+    markets big enough to matter, instead of the same thinly traded names that lead the
+    overall ranking.
+    """
+    n = top_n or int(report.get("top_n") or DEFAULT_TOP_N)
     targets: list[Target] = []
     for section in report.get("sections", ()):
         if section.get("error"):
             continue
-        rows = {r["ticker"]: r for r in section.get("rows", ())}
-        for side, key in RANKINGS:
-            for rank, ticker in enumerate(section.get("rankings", {}).get(key, ()), start=1):
-                row = rows.get(ticker)
-                if row is None:
-                    continue
-                targets.append(
+        rows = section.get("rows", ())
+        for side in (Side.NEGATIVE, Side.POSITIVE):
+            ordered = sorted(
+                (r for r in rows if _row_sign_ok(r, side)),
+                key=lambda r: (-abs(float(r["funding_8h"])), r["ticker"]),
+            )
+            for bucket in (Bucket.LIQUID, Bucket.ILLIQUID):
+                picked = [
+                    r
+                    for r in ordered
+                    if bucket_for(
+                        volume_tier(float(r["oi_usd"]), float(r.get("volume_24h_usd") or 0))
+                    )
+                    is bucket
+                ][:n]
+                targets.extend(
                     Target(
                         venue=section["venue"],
-                        ticker=ticker,
+                        ticker=row["ticker"],
                         market=row["market"],
                         side=side,
+                        bucket=bucket,
                         rank=rank,
                         funding_8h=float(row["funding_8h"]),
                         funding_apr=float(row["funding_apr"]),
@@ -115,6 +141,7 @@ def targets_from_report(report: Mapping[str, Any]) -> tuple[Target, ...]:
                         oi_usd=float(row["oi_usd"]),
                         volume_24h_usd=float(row.get("volume_24h_usd") or 0.0),
                     )
+                    for rank, row in enumerate(picked, start=1)
                 )
     return tuple(targets)
 
@@ -183,6 +210,7 @@ def _assemble(
         ticker=t.ticker,
         market=t.market,
         side=t.side,
+        bucket=t.bucket,
         rank=t.rank,
         funding_8h=t.funding_8h,
         funding_apr=t.funding_apr,

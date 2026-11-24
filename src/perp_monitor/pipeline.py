@@ -133,7 +133,11 @@ def _venue_input(
 
     if fetch.error:
         return VenueInput(fetch.venue, fetch.label, (), window(None, None), fetch.error)
-    stored = store.latest_prior(fetch.venue, before=now, min_age_hours=prior_min_age(config))
+    # 1) a stored run about one window old; 2) Binance's own OI history at now - window;
+    # 3) the oldest stored run (the widest window there is, in the first hours of data).
+    stored = store.latest_prior(
+        fetch.venue, before=now, min_age_hours=prior_min_age(config), fallback="none"
+    )
     if stored is not None:
         prior_at, points = stored
         return VenueInput(
@@ -153,6 +157,15 @@ def _venue_input(
                 compute_changes(fetch.snapshots, points),
                 window(prior_at, "binance_oi_hist"),
             )
+    stored = store.latest_prior(fetch.venue, before=now, fallback="oldest")
+    if stored is not None:
+        prior_at, points = stored
+        return VenueInput(
+            fetch.venue,
+            fetch.label,
+            compute_changes(fetch.snapshots, points),
+            window(prior_at, "store"),
+        )
     return VenueInput(
         fetch.venue, fetch.label, compute_changes(fetch.snapshots, {}), window(None, None)
     )

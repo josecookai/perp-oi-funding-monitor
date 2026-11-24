@@ -63,6 +63,7 @@ export interface Report {
 }
 
 export type Side = "negative" | "positive";
+export type Bucket = "liquid" | "illiquid";
 export type VolumeTier = "meaningful" | "thin" | "noise";
 export type FundingPattern = "persistent" | "spike" | "mixed" | "insufficient";
 export type ShortLevel = "high" | "elevated" | "moderate" | "low" | "unknown";
@@ -74,6 +75,7 @@ export interface Insight {
   ticker: string;
   market: string;
   side: Side;
+  bucket: Bucket;
   rank: number;
   funding_8h: number;
   funding_apr: number;

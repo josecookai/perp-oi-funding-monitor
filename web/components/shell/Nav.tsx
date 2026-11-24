@@ -6,16 +6,17 @@ import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
-  { href: "/", label: "负费率", icon: "▼" },
-  { href: "/positive", label: "正费率", icon: "▲" },
+  { href: "/", label: "量有意义", icon: "◉", match: ["/", "/positive"] },
+  { href: "/thin", label: "量没意义", icon: "○", match: ["/thin", "/thin/positive"] },
   { href: "/markets", label: "全部市场", icon: "▦" },
   { href: "/oi", label: "OI 变动", icon: "◆" },
   { href: "/cross", label: "跨所价差", icon: "⇄" },
   { href: "/about", label: "方法说明", icon: "ⓘ" },
 ];
 
-function isActive(pathname: string, href: string): boolean {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+function isActive(pathname: string, item: { href: string; match?: string[] }): boolean {
+  if (item.match) return item.match.includes(pathname);
+  return pathname.startsWith(item.href);
 }
 
 function Brand() {
@@ -37,7 +38,7 @@ export function RailNav() {
         <Brand />
         <nav className="space-y-1" aria-label="主导航">
           {NAV.map((item) => {
-            const active = isActive(pathname, item.href);
+            const active = isActive(pathname, item);
             return (
               <Link
                 key={item.href}
@@ -76,7 +77,7 @@ export function MobileNav() {
       </div>
       <nav className="flex gap-1 overflow-x-auto px-2 pb-2" aria-label="主导航">
         {NAV.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isActive(pathname, item);
           return (
             <Link
               key={item.href}

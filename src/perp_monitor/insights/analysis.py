@@ -9,6 +9,7 @@ from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 
 from perp_monitor.insights.models import (
+    Bucket,
     FundingPattern,
     FundingPersistence,
     FundingPoint,
@@ -42,17 +43,23 @@ BUCKET_SECONDS = 8 * 3600
 ADV_SESSIONS = 20
 
 
+def volume_tier(oi_usd: float, volume_24h_usd: float) -> VolumeTier:
+    if oi_usd < NOISE_OI_USD or volume_24h_usd < NOISE_VOLUME_USD:
+        return VolumeTier.NOISE
+    if oi_usd >= MEANINGFUL_OI_USD and volume_24h_usd >= MEANINGFUL_VOLUME_USD:
+        return VolumeTier.MEANINGFUL
+    return VolumeTier.THIN
+
+
+def bucket_for(tier: VolumeTier) -> Bucket:
+    return Bucket.LIQUID if tier is VolumeTier.MEANINGFUL else Bucket.ILLIQUID
+
+
 def volume_verdict(
     oi_usd: float, volume_24h_usd: float, spot_adv_usd: float | None
 ) -> VolumeVerdict:
-    if oi_usd < NOISE_OI_USD or volume_24h_usd < NOISE_VOLUME_USD:
-        tier = VolumeTier.NOISE
-    elif oi_usd >= MEANINGFUL_OI_USD and volume_24h_usd >= MEANINGFUL_VOLUME_USD:
-        tier = VolumeTier.MEANINGFUL
-    else:
-        tier = VolumeTier.THIN
     ratio = oi_usd / spot_adv_usd if spot_adv_usd else None
-    return VolumeVerdict(tier, oi_usd, volume_24h_usd, ratio)
+    return VolumeVerdict(volume_tier(oi_usd, volume_24h_usd), oi_usd, volume_24h_usd, ratio)
 
 
 def bucket_8h(points: Iterable[FundingPoint]) -> tuple[FundingPoint, ...]:

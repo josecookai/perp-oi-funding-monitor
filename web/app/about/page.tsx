@@ -52,6 +52,10 @@ export default function AboutPage() {
             <b className="text-ink">量偏薄</b>：介于两者之间。
           </p>
           <p>卡片还会给出 “OI / 现货日均成交额”（20 个交易日均值），看永续仓位相对现货市场有多大。</p>
+          <p>
+            网站按这一档分成两页：<b className="text-ink">量有意义</b>（首页）只在“量有意义”的市场里排资金费率 Top 10；
+            <b className="text-ink">量没意义</b> 页在“量偏薄”和“量太小”的市场里另排 Top 10。两页都按交易所、正负费率分开。
+          </p>
         </Block>
         <Block title="是否热门做空">
           <p>

@@ -188,3 +188,15 @@ def test_prior_min_age_uses_small_slack() -> None:
     assert prior_min_age(load_config(Path("/tmp"), {})) == pytest.approx(7.75)
     tight = load_config(Path("/tmp"), {"WINDOW_TOLERANCE_HOURS": "0.1"})
     assert prior_min_age(tight) == pytest.approx(7.9)
+
+
+def test_young_store_uses_binance_backfill_and_oldest_hl_run(root: Path) -> None:
+    # Two runs 1h and 2h after a fresh start: no stored run is a full window old yet.
+    run(root, now=T0)
+    run(root, now=T0 + timedelta(hours=1))
+    outcome = run(root, now=T0 + timedelta(hours=2))
+    binance = outcome.report.section(Venue.BINANCE)
+    hl = outcome.report.section(Venue.HYPERLIQUID)
+    assert binance.window.origin == "binance_oi_hist"  # true 8h-ago OI from Binance
+    assert hl.window.origin == "store"
+    assert hl.window.hours == pytest.approx(2)  # the oldest run, not the 1h-old one

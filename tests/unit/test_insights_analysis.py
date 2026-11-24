@@ -153,3 +153,12 @@ class TestSpotStats:
 
     def test_empty(self) -> None:
         assert spot_stats([], shares_outstanding=None) is None
+
+
+def test_bucket_for_tiers() -> None:
+    from perp_monitor.insights.analysis import bucket_for, volume_tier
+    from perp_monitor.insights.models import Bucket
+
+    assert bucket_for(volume_tier(5e6, 5e6)) is Bucket.LIQUID
+    assert bucket_for(volume_tier(5e5, 5e6)) is Bucket.ILLIQUID  # thin
+    assert bucket_for(volume_tier(5e4, 5e6)) is Bucket.ILLIQUID  # noise

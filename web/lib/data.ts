@@ -6,6 +6,7 @@ import metaJson from "@/data/meta.json";
 import reportJson from "@/data/report.json";
 
 import type {
+  Bucket,
   HistoryFile,
   Insight,
   InsightsFile,
@@ -55,11 +56,16 @@ export function insightFor(venue: Venue, ticker: string): Insight | undefined {
   return insights.items.find((i) => i.venue === venue && i.ticker === ticker);
 }
 
-/** Funding top-N cards for one side, both venues, most extreme first. */
-export function insightsBySide(side: Side): Insight[] {
+/** Funding top-N cards for one side and volume bucket, both venues, most extreme first. */
+export function insightsFor(side: Side, bucket: Bucket): Insight[] {
   return insights.items
-    .filter((i) => i.side === side)
+    .filter((i) => i.side === side && i.bucket === bucket)
     .toSorted((a, b) => Math.abs(b.funding_8h) - Math.abs(a.funding_8h));
+}
+
+export function feedPath(side: Side, bucket: Bucket): string {
+  const base = bucket === "liquid" ? "" : "/thin";
+  return side === "negative" ? base || "/" : `${base}/positive`;
 }
 
 export function rowsByTickers(venue: Venue, tickers: string[]): ReportRow[] {

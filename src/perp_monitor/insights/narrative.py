@@ -11,6 +11,7 @@ from datetime import date
 
 from perp_monitor.insights.models import (
     Catalysts,
+    Fundamentals,
     FundingPattern,
     FundingPersistence,
     Profile,
@@ -51,6 +52,7 @@ class NarrativeInput:
     funding_8h: float
     funding_apr: float
     profile: Profile | None
+    fundamentals: Fundamentals | None
     spot: SpotStats | None
     catalysts: Catalysts
     short_interest: ShortInterest | None
@@ -71,7 +73,9 @@ def _zh_amount(x: float) -> str:
         return f"{a / 1e4:.1f}万"
     if a < 1e8:
         return f"{a / 1e4:,.0f}万"
-    return f"{a / 1e8:.1f}亿"
+    if a < 1e12:
+        return f"{a / 1e8:,.1f}亿"
+    return f"{a / 1e12:.2f}万亿"
 
 
 def usd_zh(x: float | None) -> str:
@@ -102,6 +106,15 @@ def _md(d: date) -> str:
     return f"{d.month:02d}/{d.day:02d}"
 
 
+WEEKDAYS = ("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+TIMING_ZH = {"bmo": "盘前", "amc": "盘后"}
+
+
+def _md_wd(d: date) -> str:
+    """Month/day with the weekday in Chinese, e.g. 11/24 (Tuesday)."""
+    return f"{_md(d)}（{WEEKDAYS[d.weekday()]}）"
+
+
 # ---------- headline ----------
 
 
@@ -116,10 +129,11 @@ def _pattern_phrase(p: FundingPersistence, side: Side) -> str | None:
 
 def _catalyst_hint(n: NarrativeInput) -> str | None:
     cat = n.catalysts
-    if cat.earnings is not None:
+    if cat.earnings is not None and cat.earnings.confirmed:
         days = (cat.earnings.day - n.today).days
         if EARNINGS_HINT_DAYS[0] <= days <= EARNINGS_HINT_DAYS[1]:
-            return f"财报 {_md(cat.earnings.day)}"
+            timing = TIMING_ZH.get(cat.earnings.timing or "", "")
+            return f"财报 {_md(cat.earnings.day)}{' ' + timing if timing else ''}"
     recent = [f for f in cat.filings if (n.today - f.filed).days <= FILING_HINT_DAYS]
     if recent:
         f = recent[0]
@@ -160,12 +174,42 @@ def _first_sentence(text: str) -> str:
     return text if len(text) <= MAX_WHAT else text[: MAX_WHAT - 1] + "…"
 
 
-def _what(p: Profile | None) -> str:
+def english_summary(p: Profile | None) -> str | None:
+    """First sentence of the English description, shown under the Chinese one."""
+    return _first_sentence(p.description) if p is not None and p.description else None
+
+
+def _fundamentals_line(f: Fundamentals | None) -> str | None:
+    if f is None:
+        return None
+    parts = []
+    if f.market_cap_usd:
+        parts.append(f"市值 {usd_zh(f.market_cap_usd)}")
+    if f.revenue_ttm_usd:
+        label = "近四季营收" if f.quarters >= 4 else f"近 {f.quarters} 季营收"
+        parts.append(f"{label} {usd_zh(f.revenue_ttm_usd)}")
+    if f.gross_margin is not None:
+        parts.append(f"毛利率 {f.gross_margin:.1%}")
+    if not parts:
+        return None
+    period = f"（财报截至 {f.period_end.year}/{f.period_end.month:02d}）" if f.period_end else ""
+    return "，".join(parts) + period + "。"
+
+
+def _what(p: Profile | None, f: Fundamentals | None) -> str:
     if p is None:
         return "暂无公司资料。"
     kind = p.industry or p.sector
-    lead = f"{p.name} · {kind}。" if kind else f"{p.name}。"
-    return lead + (_first_sentence(p.description) if p.description else "")
+    if p.name_zh and p.description_zh:
+        lead = f"{p.name_zh}（{p.name}）：{p.description_zh.rstrip('。')}。"
+    else:
+        lead = (f"{p.name} · {kind}。" if kind else f"{p.name}。") + (
+            _first_sentence(p.description) if p.description else ""
+        )
+    money = _fundamentals_line(f)
+    if money is None:
+        money = "暂无财务数据（外国发行人、基金或新上市公司常见）。"
+    return f"{lead}{money}"
 
 
 def _funding(n: NarrativeInput) -> str:
@@ -211,18 +255,45 @@ def _spot_moves(s: SpotStats | None) -> str | None:
     return "现货 " + "，".join(moves) if moves else None
 
 
+def _when(days: int) -> str:
+    return "今天" if days == 0 else (f"{days} 天后" if days > 0 else f"{-days} 天前")
+
+
 def _earnings(cat: Catalysts, today: date) -> str | None:
-    if cat.earnings is None:
+    e = cat.earnings
+    if e is None:
         return None
-    days = (cat.earnings.day - today).days
-    when = "今天" if days == 0 else (f"{days} 天后" if days > 0 else f"{-days} 天前")
-    return f"{_md(cat.earnings.day)} 财报（{when}）"
+    days = (e.day - today).days
+    if not e.confirmed:
+        if days < 0:
+            return "下次财报按惯例应在近期，日期还没公布"
+        return f"下次财报预计 {_md_wd(e.day)}前后（按上次财报日推算，未确认）"
+    timing = TIMING_ZH.get(e.timing or "")
+    verb = "发财报" if days >= 0 else "已发财报"
+    note = "" if timing else "，盘前盘后未定"
+    return f"{_md_wd(e.day)}{timing or ''}{verb}（{_when(days)}{note}）"
+
+
+def _last_earnings(cat: Catalysts) -> str | None:
+    e = cat.last_earnings
+    if e is None:
+        return None
+    text = f"上次财报 {_md_wd(e.reported)}"
+    if e.fiscal_quarter:
+        text += f"（{e.fiscal_quarter} 季度）"
+    if e.eps is not None and e.consensus is not None:
+        text += f" EPS {e.eps:g} vs 预期 {e.consensus:g}"
+        if e.surprise_pct is not None:
+            beat = "超预期" if e.surprise_pct >= 0 else "低于预期"
+            text += f"，{beat} {abs(e.surprise_pct):.1f}%"
+    return text
 
 
 def _catalyst(n: NarrativeInput) -> str:
     cat = n.catalysts
     events = [
         _earnings(cat, n.today),
+        _last_earnings(cat),
         *(f"{_md(f.filed)} {f.form} {'、'.join(f.labels_zh)}" for f in cat.filings[:3]),
     ]
     if cat.news:
@@ -252,7 +323,7 @@ def _short(si: ShortInterest | None, level: ShortLevel, spot: SpotStats | None) 
 
 def answers(n: NarrativeInput) -> tuple[tuple[str, str], ...]:
     return (
-        ("what", _what(n.profile)),
+        ("what", _what(n.profile, n.fundamentals)),
         ("funding", _funding(n)),
         ("catalyst", _catalyst(n)),
         ("volume", _volume(n.volume)),

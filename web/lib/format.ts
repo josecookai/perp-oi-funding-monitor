@@ -5,7 +5,8 @@ function zhAmount(x: number): string {
   if (a < 1e4) return a.toLocaleString("en-US", { maximumFractionDigits: 0 });
   if (a < 1e6) return `${(a / 1e4).toFixed(1)}万`;
   if (a < 1e8) return `${Math.round(a / 1e4).toLocaleString("en-US")}万`;
-  return `${(a / 1e8).toFixed(1)}亿`;
+  if (a < 1e12) return `${(a / 1e8).toLocaleString("en-US", { maximumFractionDigits: 1 })}亿`;
+  return `${(a / 1e12).toFixed(2)}万亿`;
 }
 
 /** $36.2万, $4,112万, $16.2亿 */
@@ -82,6 +83,15 @@ const HKT_FMT = new Intl.DateTimeFormat("zh-CN", {
 export function hktStamp(iso: string | null | undefined): string {
   if (!iso) return "—";
   return HKT_FMT.format(new Date(iso));
+}
+
+const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+/** "11/24（周二）" for an ISO calendar date (no timezone shift). */
+export function monthDayWeekday(isoDate: string): string {
+  const [y, m, d] = isoDate.slice(0, 10).split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}（${weekday}）`;
 }
 
 export function monthDay(isoDate: string): string {

@@ -84,7 +84,18 @@ export interface Insight {
     sector: string | null;
     industry: string | null;
     description: string | null;
+    name_zh: string | null;
+    description_zh: string | null;
   } | null;
+  fundamentals: {
+    market_cap_usd: number | null;
+    revenue_ttm_usd: number | null;
+    gross_profit_ttm_usd: number | null;
+    gross_margin: number | null;
+    period_end: string | null;
+    quarters: number;
+  } | null;
+  summary_en: string | null;
   spot: {
     as_of: string;
     close: number;
@@ -98,7 +109,14 @@ export interface Insight {
   catalysts: {
     news: { title: string; url: string; published_at: string; source: string; summary: string }[];
     filings: { form: string; filed: string; items: string[]; labels_zh: string[]; url: string }[];
-    earnings: { day: string; timing: "bmo" | "amc" | null } | null;
+    earnings: { day: string; timing: "bmo" | "amc" | null; confirmed: boolean } | null;
+    last_earnings: {
+      reported: string;
+      fiscal_quarter: string;
+      eps: number | null;
+      consensus: number | null;
+      surprise_pct: number | null;
+    } | null;
   };
   short_interest: {
     settlement_date: string;

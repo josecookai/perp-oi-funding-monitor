@@ -3,9 +3,20 @@ import type { ReactNode } from "react";
 
 import { FundingBars } from "@/components/charts/FundingBars";
 import { PatternBadge, ShortBadge, TickerAvatar, VenueChip, VolumeBadge } from "@/components/ui/Badges";
-import { daysBetween, monthDay, pct, plainPct, rate, safeHref, tone, usdZh } from "@/lib/format";
+import {
+  daysBetween,
+  monthDay,
+  monthDayWeekday,
+  pct,
+  plainPct,
+  rate,
+  safeHref,
+  tone,
+  usdZh,
+} from "@/lib/format";
 import type { AnswerKey, Insight } from "@/lib/types";
 
+import { CompanyBlock } from "./CompanyBlock";
 import { RichText } from "./RichText";
 
 const QUESTIONS: { key: AnswerKey; q: string }[] = [
@@ -29,24 +40,55 @@ function Signed({ value, fmt }: { value: number | null | undefined; fmt: (x: num
   return <span className={`tone-${tone(value)}`}>{fmt(value)}</span>;
 }
 
-function CatalystLinks({ item, asOf }: { item: Insight; asOf: string }) {
-  const { earnings, filings, news } = item.catalysts;
-  if (!earnings && filings.length === 0 && news.length === 0) return null;
+const TIMING: Record<string, string> = { bmo: "盘前", amc: "盘后" };
+
+function when(days: number): string {
+  return days === 0 ? "今天" : days > 0 ? `${days} 天后` : `${-days} 天前`;
+}
+
+function EarningsRows({ item, asOf }: { item: Insight; asOf: string }) {
+  const { earnings, last_earnings: last } = item.catalysts;
   return (
-    <ul className="mt-2 space-y-1.5 text-[12.5px]">
+    <>
       {earnings && (
-        <li className="flex gap-2">
-          <span className="num shrink-0 text-ink-3">{monthDay(earnings.day)}</span>
-          <span className="font-semibold text-warn">
-            财报
-            {earnings.timing === "bmo" ? "（盘前）" : earnings.timing === "amc" ? "（盘后）" : ""}
-            {(() => {
-              const d = daysBetween(asOf, earnings.day);
-              return d === 0 ? " · 今天" : d > 0 ? ` · ${d} 天后` : ` · ${-d} 天前`;
-            })()}
+        <li className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold text-warn">{earnings.confirmed ? "财报日" : "下次财报（预计）"}</span>
+          <span className="num font-semibold">{monthDayWeekday(earnings.day)}</span>
+          <span className="text-ink-2">
+            {earnings.confirmed
+              ? `${earnings.timing ? TIMING[earnings.timing] : "盘前盘后未定"} · ${when(daysBetween(asOf, earnings.day))}`
+              : "前后 · 按上次财报日推算，未确认"}
           </span>
         </li>
       )}
+      {last && (
+        <li className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold text-ink-3">上次财报</span>
+          <span className="num">{monthDayWeekday(last.reported)}</span>
+          {last.fiscal_quarter && <span className="text-ink-3">{last.fiscal_quarter} 季度</span>}
+          {last.eps !== null && last.consensus !== null && (
+            <span className="num">
+              EPS {last.eps} vs 预期 {last.consensus}
+              {last.surprise_pct !== null && (
+                <span className={`ml-1 font-semibold tone-${tone(last.surprise_pct)}`}>
+                  ({last.surprise_pct > 0 ? "+" : ""}
+                  {last.surprise_pct.toFixed(1)}%)
+                </span>
+              )}
+            </span>
+          )}
+        </li>
+      )}
+    </>
+  );
+}
+
+function CatalystLinks({ item, asOf }: { item: Insight; asOf: string }) {
+  const { earnings, last_earnings: last, filings, news } = item.catalysts;
+  if (!earnings && !last && filings.length === 0 && news.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1.5 text-[12.5px]">
+      <EarningsRows item={item} asOf={asOf} />
       {filings.slice(0, 3).map((f, i) => (
         <li key={`f${i}`} className="flex gap-2">
           <span className="num shrink-0 text-ink-3">{monthDay(f.filed)}</span>
@@ -127,7 +169,11 @@ export function InsightCard({ item, slug, asOf }: { item: Insight; slug: string;
             <div key={key} className="grid gap-0.5 sm:grid-cols-[120px_1fr] sm:gap-3">
               <dt className="text-[12.5px] font-semibold text-ink-3">{q}</dt>
               <dd className="text-[13.5px] leading-[1.6] text-ink">
-                <RichText text={item.answers[key]} ticker={item.ticker} />
+                {key === "what" ? (
+                  <CompanyBlock item={item} />
+                ) : (
+                  <RichText text={item.answers[key]} ticker={item.ticker} />
+                )}
                 {key === "catalyst" && <CatalystLinks item={item} asOf={asOf} />}
               </dd>
             </div>

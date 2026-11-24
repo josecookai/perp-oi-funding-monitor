@@ -50,7 +50,33 @@ class Profile:
     name: str
     sector: str | None
     industry: str | None
-    description: str | None
+    description: str | None  # English, from Nasdaq
+    name_zh: str | None = None  # curated, assets/company_zh.json
+    description_zh: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Fundamentals:
+    market_cap_usd: float | None
+    revenue_ttm_usd: float | None  # sum of the last 4 reported quarters
+    gross_profit_ttm_usd: float | None
+    period_end: date | None  # end of the latest quarter in the sum
+    quarters: int  # how many quarters were summed (4 unless the company is new)
+
+    @property
+    def gross_margin(self) -> float | None:
+        if not self.revenue_ttm_usd or self.gross_profit_ttm_usd is None:
+            return None
+        return self.gross_profit_ttm_usd / self.revenue_ttm_usd
+
+
+@dataclass(frozen=True, slots=True)
+class LastEarnings:
+    reported: date
+    fiscal_quarter: str  # "Jul 2026"
+    eps: float | None
+    consensus: float | None
+    surprise_pct: float | None  # percent, as Nasdaq reports it (8.5 = +8.5%)
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +120,7 @@ class Filing:
 class EarningsDate:
     day: date
     timing: str | None  # "bmo" (before open), "amc" (after close) or None
+    confirmed: bool = True  # False: estimated from the last report date + one quarter
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,7 +165,8 @@ class VolumeVerdict:
 class Catalysts:
     news: tuple[NewsItem, ...] = ()
     filings: tuple[Filing, ...] = ()
-    earnings: EarningsDate | None = None
+    earnings: EarningsDate | None = None  # next (or just-reported) earnings date
+    last_earnings: LastEarnings | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,6 +180,7 @@ class TickerInsight:
     funding_8h: float
     funding_apr: float
     profile: Profile | None
+    fundamentals: Fundamentals | None
     spot: SpotStats | None
     catalysts: Catalysts
     short_interest: ShortInterest | None
@@ -160,6 +189,7 @@ class TickerInsight:
     volume: VolumeVerdict
     headline: str
     answers: tuple[tuple[str, str], ...]  # (question key, one-line answer), display order
+    summary_en: str | None = None  # first sentence of the English description
     errors: tuple[str, ...] = field(default=())
 
     @property

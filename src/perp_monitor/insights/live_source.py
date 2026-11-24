@@ -1,10 +1,13 @@
-"""The real data source behind the insight cards, with caching for slow-changing data."""
+"""The real data source behind the insight cards.
+
+Company facts live in the local company database (company_db.py); short-lived API
+results (CIK map, earnings calendar days, FINRA) in the JSON cache.
+"""
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict
 from datetime import date, datetime, timedelta
 
 import httpx
@@ -14,10 +17,14 @@ from perp_monitor.insights import finra, funding_history, nasdaq, news, sec_fili
 from perp_monitor.insights.analysis import spot_stats
 from perp_monitor.insights.cache import JsonCache
 from perp_monitor.insights.clock import market_date
+from perp_monitor.insights.company_db import CompanyDB
+from perp_monitor.insights.company_zh import ZhEntry, with_zh
 from perp_monitor.insights.models import (
     EarningsDate,
     Filing,
+    Fundamentals,
     FundingPoint,
+    LastEarnings,
     NewsItem,
     Profile,
     ShortInterest,
@@ -26,15 +33,17 @@ from perp_monitor.insights.models import (
 
 log = logging.getLogger(__name__)
 
-PROFILE_TTL = timedelta(days=7)
+PROFILE_TTL = timedelta(days=30)
 MISSING_PROFILE_TTL = timedelta(days=1)
 CIK_TTL = timedelta(days=7)
 SHARES_TTL = timedelta(days=3)
+FINANCIALS_TTL = timedelta(days=7)
+LAST_EARNINGS_TTL = timedelta(days=1)
 EARNINGS_DAY_TTL = timedelta(hours=6)
 SHORT_INTEREST_TTL = timedelta(hours=12)
 NEWS_LOOKBACK = timedelta(days=7)
 FILINGS_LOOKBACK_DAYS = 14
-EARNINGS_WINDOW = (-7, 14)  # calendar days around today
+EARNINGS_WINDOW = (-7, 35)  # calendar days around today; Nasdaq lists ~5 weeks ahead
 POLICY = RetryPolicy(attempts=2, backoff_seconds=1.0)
 
 
@@ -45,6 +54,8 @@ class LiveSource:
         cache: JsonCache,
         now: datetime,
         *,
+        companies: CompanyDB,
+        zh: Mapping[str, ZhEntry] | None = None,
         binance_base_url: str,
         hl_info_url: str,
         sec_user_agent: str,
@@ -52,6 +63,8 @@ class LiveSource:
         self._http = http
         self._cache = cache
         self._now = now
+        self._db = companies
+        self._zh = zh or {}
         self._binance = binance_base_url
         self._hl = hl_info_url
         self._sec_ua = sec_user_agent
@@ -62,47 +75,67 @@ class LiveSource:
         """US-Eastern calendar day (earnings, filings and bars are ET days)."""
         return market_date(self._now)
 
-    def _cached_profile(self, ticker: str) -> Profile | None:
-        cached = self._cache.get(f"profile:{ticker}", PROFILE_TTL)
-        if isinstance(cached, dict) and "name" in cached:
-            return Profile(**cached)
-        return None
+    def _db_profile(self, ticker: str) -> tuple[bool, Profile | None]:
+        """(known, profile) from the database: known means a fresh entry, even an empty one."""
+        row = self._db.get(ticker)
+        if row is None:
+            return False, None
+        found = row.profile()
+        ttl = PROFILE_TTL if found is not None else MISSING_PROFILE_TTL
+        return row.fresh("profile", self._now, ttl), found
 
     def profile(self, ticker: str) -> Profile | None:
-        found = self._cached_profile(ticker)
-        if found is not None:
-            return found
-        if self._cache.get(f"noprofile:{ticker}", MISSING_PROFILE_TTL):
-            return None
-        found = nasdaq.fetch_profile(self._http, ticker, policy=POLICY)
-        if found is None:
-            self._cache.put(f"noprofile:{ticker}", True)
-        else:
-            self._cache.put(f"profile:{ticker}", asdict(found))
-        return found
+        known, found = self._db_profile(ticker)
+        if not known:
+            found = nasdaq.fetch_profile(self._http, ticker, policy=POLICY)
+            self._db.save_profile(ticker, found, self._now)
+        return with_zh(found, self._zh.get(ticker))
 
-    def _share_info(self, ticker: str) -> tuple[float | None, bool]:
-        key = f"shares:{ticker}"
-        cached = self._cache.get(key, SHARES_TTL)
-        if isinstance(cached, dict) and "shares" in cached:
-            return cached["shares"], bool(cached.get("multi_class"))
-        shares, multi = nasdaq.fetch_share_info(self._http, ticker, policy=POLICY)
-        if shares is not None:
-            self._cache.put(key, {"shares": shares, "multi_class": multi})
-        return shares, multi
+    def _share_info(self, ticker: str) -> tuple[float | None, bool, float | None]:
+        row = self._db.get(ticker)
+        if row is not None and row.fresh("shares", self._now, SHARES_TTL):
+            return row.shares()
+        shares, multi, cap = nasdaq.fetch_share_info(self._http, ticker, policy=POLICY)
+        self._db.save_shares(ticker, shares, multi, cap, self._now)
+        return shares, multi, cap
 
     def spot(self, ticker: str) -> SpotStats | None:
         bars = nasdaq.fetch_bars(self._http, ticker, self.today, policy=POLICY)
         try:
-            shares, multi = self._share_info(ticker)
+            shares, multi, _ = self._share_info(ticker)
         except HttpError as exc:
             log.warning("%s share count: %s", ticker, exc)
             shares, multi = None, False
         return spot_stats(bars, shares, multi)
 
+    def fundamentals(self, ticker: str) -> Fundamentals | None:
+        row = self._db.get(ticker)
+        if row is not None and row.fresh("financials", self._now, FINANCIALS_TTL):
+            found = row.fundamentals()
+        else:
+            found = nasdaq.fetch_financials(self._http, ticker, None, policy=POLICY)
+            self._db.save_financials(ticker, found, self._now)
+        try:
+            _, _, cap = self._share_info(ticker)
+        except HttpError:
+            cap = None
+        if found is None:
+            return None if cap is None else Fundamentals(cap, None, None, None, 0)
+        return Fundamentals(
+            cap, found.revenue_ttm_usd, found.gross_profit_ttm_usd, found.period_end, found.quarters
+        )
+
+    def last_earnings(self, ticker: str) -> LastEarnings | None:
+        row = self._db.get(ticker)
+        if row is not None and row.fresh("earnings", self._now, LAST_EARNINGS_TTL):
+            return row.last_earnings()
+        found = nasdaq.fetch_earnings_surprise(self._http, ticker, policy=POLICY)
+        self._db.save_last_earnings(ticker, found, self._now)
+        return found
+
     def news(self, ticker: str) -> tuple[NewsItem, ...]:
-        # profile() already ran for this ticker in the same worker; only read the cache.
-        company = self._cached_profile(ticker)
+        # profile() already ran for this ticker in the same worker; only read the database.
+        _, company = self._db_profile(ticker)
         return news.fetch_news(
             self._http,
             ticker,

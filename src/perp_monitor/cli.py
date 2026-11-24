@@ -31,6 +31,8 @@ from perp_monitor.http import HttpError, build_client
 from perp_monitor.hyperliquid_client import HyperliquidClient, HyperliquidError, stock_base_names
 from perp_monitor.insights.cache import JsonCache
 from perp_monitor.insights.collect import build_insights
+from perp_monitor.insights.company_db import CompanyDB
+from perp_monitor.insights.company_zh import load_company_zh
 from perp_monitor.insights.live_source import LiveSource
 from perp_monitor.insights.serialize import bundle_to_json
 from perp_monitor.notify import NotifyError, TelegramNotifier
@@ -64,6 +66,14 @@ def _parser() -> argparse.ArgumentParser:
     site.add_argument(
         "--skip-insights", action="store_true", help="keep the previous insights.json"
     )
+    comp = sub.add_parser("companies", help="local company database (profiles, financials)")
+    comp_sub = comp.add_subparsers(dest="action", required=True)
+    for action, text in (
+        ("status", "coverage: missing Chinese entries, profiles, financials"),
+        ("refresh", "fill the database for the allowlist (only stale entries are fetched)"),
+    ):
+        cmd = comp_sub.add_parser(action, help=text)
+        cmd.add_argument("tickers", nargs="*", type=str.upper)
     allow = sub.add_parser("allowlist", help="maintain assets/stocks_allowlist.txt")
     allow_sub = allow.add_subparsers(dest="action", required=True)
     validate = allow_sub.add_parser("validate", help="check the allowlist file")
@@ -193,21 +203,64 @@ def _edit(args: argparse.Namespace, config: Config) -> int:
     return EXIT_OK
 
 
-def _insights(
-    config: Config, http: httpx.Client, report: dict[str, object], now: datetime
-) -> tuple[dict[str, object] | None, str | None]:
-    cache = JsonCache(config.insights_cache_path, now)
-    source = LiveSource(
+def _live_source(
+    config: Config, http: httpx.Client, cache: JsonCache, companies: CompanyDB, now: datetime
+) -> LiveSource:
+    return LiveSource(
         http,
         cache,
         now,
+        companies=companies,
+        zh=load_company_zh(config.company_zh_path),
         binance_base_url=config.binance_base_url,
         hl_info_url=config.hl_info_url,
         sec_user_agent=config.sec_user_agent,
     )
+
+
+def _companies(args: argparse.Namespace, config: Config, http: httpx.Client) -> int:
+    tickers = sorted(args.tickers or load_allowlist(config.allowlist_path).tickers)
+    zh = load_company_zh(config.company_zh_path)
+    if args.action == "status":
+        with CompanyDB(config.company_db_path) as companies:
+            rows = {r.ticker: r for r in companies.all()}
+        no_zh = [t for t in tickers if t not in zh]
+        no_profile = [t for t in tickers if t not in rows or rows[t].profile() is None]
+        no_fin = [t for t in tickers if t not in rows or rows[t].fundamentals() is None]
+        _out(f"{len(tickers)} tickers, {len(rows)} in {config.company_db_path.name}")
+        _out(f"no Chinese entry ({len(no_zh)}): {' '.join(no_zh)}")
+        _out(f"no profile ({len(no_profile)}): {' '.join(no_profile)}")
+        _out(f"no financials ({len(no_fin)}): {' '.join(no_fin)}")
+        return EXIT_OK
+    now = datetime.now(UTC).replace(microsecond=0)
+    cache = JsonCache(config.insights_cache_path, now)
+    failures = 0
+    with CompanyDB(config.company_db_path) as companies:
+        source = _live_source(config, http, cache, companies, now)
+        for ticker in tickers:
+            for label, fetch in (
+                ("profile", source.profile),
+                ("financials", source.fundamentals),
+                ("last earnings", source.last_earnings),
+            ):
+                try:
+                    fetch(ticker)
+                except Exception as exc:  # one ticker must not stop the refresh
+                    failures += 1
+                    log.warning("%s %s: %s", ticker, label, type(exc).__name__)
+    _out(f"refreshed {len(tickers)} tickers into {config.company_db_path} ({failures} failures)")
+    return EXIT_PARTIAL if failures else EXIT_OK
+
+
+def _insights(
+    config: Config, http: httpx.Client, report: dict[str, object], now: datetime
+) -> tuple[dict[str, object] | None, str | None]:
+    cache = JsonCache(config.insights_cache_path, now)
     try:
-        bundle = build_insights(report, source, now)
-        data = bundle_to_json(bundle)
+        with CompanyDB(config.company_db_path) as companies:
+            source = _live_source(config, http, cache, companies, now)
+            bundle = build_insights(report, source, now)
+            data = bundle_to_json(bundle)
     except Exception as exc:
         log.exception("insights failed; keeping the previous insights.json")
         return None, type(exc).__name__
@@ -246,6 +299,8 @@ def _dispatch(args: argparse.Namespace, config: Config, http: httpx.Client) -> i
         return _run(args, config, http)
     if args.command == "site":
         return _site(args, config, http)
+    if args.command == "companies":
+        return _companies(args, config, http)
     if args.action == "validate":
         return _validate(args, config, http)
     if args.action == "suggest":

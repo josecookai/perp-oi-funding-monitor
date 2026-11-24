@@ -9,7 +9,7 @@ from typing import Any
 
 from perp_monitor.insights import analysis
 from perp_monitor.insights.collect import InsightsBundle
-from perp_monitor.insights.models import ShortInterest, TickerInsight
+from perp_monitor.insights.models import Fundamentals, ShortInterest, TickerInsight
 
 SCHEMA_VERSION = 1
 
@@ -21,6 +21,8 @@ def _plain(obj: Any) -> Any:
         return obj.isoformat()
     if isinstance(obj, ShortInterest):
         return {**_fields(obj), "change_pct": obj.change_pct}
+    if isinstance(obj, Fundamentals):
+        return {**_fields(obj), "gross_margin": obj.gross_margin}
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return _fields(obj)
     if isinstance(obj, tuple | list):

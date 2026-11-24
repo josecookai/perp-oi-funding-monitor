@@ -10,7 +10,7 @@ import logging
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from types import MappingProxyType
 from typing import Any, Protocol, TypeVar
 
@@ -28,7 +28,9 @@ from perp_monitor.insights.models import (
     Catalysts,
     EarningsDate,
     Filing,
+    Fundamentals,
     FundingPoint,
+    LastEarnings,
     NewsItem,
     Profile,
     ShortInterest,
@@ -36,7 +38,7 @@ from perp_monitor.insights.models import (
     SpotStats,
     TickerInsight,
 )
-from perp_monitor.insights.narrative import NarrativeInput, answers, headline
+from perp_monitor.insights.narrative import NarrativeInput, answers, english_summary, headline
 
 log = logging.getLogger(__name__)
 
@@ -47,12 +49,15 @@ NO_HISTORY: tuple[FundingPoint, ...] = ()
 NO_EARNINGS: Mapping[str, EarningsDate] = MappingProxyType({})
 NO_SHORTS: Mapping[str, ShortInterest] = MappingProxyType({})
 DEFAULT_TOP_N = 10
+QUARTER = timedelta(days=91)
 
 
 class InsightSource(Protocol):
     def warm_up(self) -> None: ...
     def profile(self, ticker: str) -> Profile | None: ...
     def spot(self, ticker: str) -> SpotStats | None: ...
+    def fundamentals(self, ticker: str) -> Fundamentals | None: ...
+    def last_earnings(self, ticker: str) -> LastEarnings | None: ...
     def news(self, ticker: str) -> tuple[NewsItem, ...]: ...
     def filings(self, ticker: str) -> tuple[Filing, ...]: ...
     def earnings(self, tickers: Sequence[str]) -> Mapping[str, EarningsDate]: ...
@@ -80,6 +85,8 @@ class Target:
 @dataclass(frozen=True, slots=True)
 class TickerData:
     profile: Profile | None
+    fundamentals: Fundamentals | None
+    last_earnings: LastEarnings | None
     spot: SpotStats | None
     news: tuple[NewsItem, ...]
     filings: tuple[Filing, ...]
@@ -165,8 +172,26 @@ def _ticker_data(source: InsightSource, ticker: str) -> TickerData:
     spot, e2 = _attempt(f"{ticker} spot", lambda: source.spot(ticker), None)
     news, e3 = _attempt(f"{ticker} news", lambda: source.news(ticker), NO_NEWS)
     filings, e4 = _attempt(f"{ticker} filings", lambda: source.filings(ticker), NO_FILINGS)
-    errors = tuple(e for e in (e1, e2, e3, e4) if e)
-    return TickerData(profile, spot, news, filings, errors)
+    funds, e5 = _attempt(f"{ticker} financials", lambda: source.fundamentals(ticker), None)
+    last, e6 = _attempt(f"{ticker} last earnings", lambda: source.last_earnings(ticker), None)
+    errors = tuple(e for e in (e1, e2, e3, e4, e5, e6) if e)
+    return TickerData(profile, funds, last, spot, news, filings, errors)
+
+
+def next_earnings(
+    listed: EarningsDate | None, last: LastEarnings | None, today: date
+) -> EarningsDate | None:
+    """The calendar's date when Nasdaq lists one (about five weeks ahead), else an estimate:
+    the last report date plus one quarter, rolled forward past dates more than a week old.
+    """
+    if listed is not None:
+        return listed
+    if last is None:
+        return None
+    day = last.reported + QUARTER
+    while day < today - timedelta(days=7):
+        day += QUARTER
+    return EarningsDate(day, None, confirmed=False)
 
 
 def _with_pct(si: ShortInterest | None, spot: SpotStats | None) -> ShortInterest | None:
@@ -189,13 +214,19 @@ def _assemble(
     volume = volume_verdict(t.oi_usd, t.volume_24h_usd, adv)
     si = _with_pct(shorts.get(t.ticker), data.spot)
     level = short_level(si)
-    catalysts = Catalysts(data.news, data.filings, earnings.get(t.ticker))
+    catalysts = Catalysts(
+        data.news,
+        data.filings,
+        next_earnings(earnings.get(t.ticker), data.last_earnings, today),
+        data.last_earnings,
+    )
     narrative = NarrativeInput(
         ticker=t.ticker,
         side=t.side,
         funding_8h=t.funding_8h,
         funding_apr=t.funding_apr,
         profile=data.profile,
+        fundamentals=data.fundamentals,
         spot=data.spot,
         catalysts=catalysts,
         short_interest=si,
@@ -215,6 +246,7 @@ def _assemble(
         funding_8h=t.funding_8h,
         funding_apr=t.funding_apr,
         profile=data.profile,
+        fundamentals=data.fundamentals,
         spot=data.spot,
         catalysts=catalysts,
         short_interest=si,
@@ -223,6 +255,7 @@ def _assemble(
         volume=volume,
         headline=headline(narrative),
         answers=answers(narrative),
+        summary_en=english_summary(data.profile),
         errors=errors,
     )
 

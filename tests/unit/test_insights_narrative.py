@@ -6,9 +6,11 @@ from perp_monitor.insights.models import (
     Catalysts,
     EarningsDate,
     Filing,
+    Fundamentals,
     FundingPattern,
     FundingPersistence,
     FundingPoint,
+    LastEarnings,
     NewsItem,
     Profile,
     ShortInterest,
@@ -47,6 +49,7 @@ def base(**overrides: object) -> NarrativeInput:
             "Finance: Consumer Services",
             "Forward Industries is a Solana treasury company. It buys SOL.",
         ),
+        "fundamentals": None,
         "spot": SpotStats(date(2026, 11, 23), 3.7, -0.061, 0.12, None, 1.2e7, 8e7),
         "catalysts": Catalysts(),
         "short_interest": None,
@@ -156,7 +159,7 @@ class TestAnswers:
         )
         text = dict(answers(base(catalysts=cat)))["catalyst"]
         assert "现货 1 日 -6.1%" in text
-        assert "12/08 财报（14 天后）" in text
+        assert "12/08（周二）发财报（14 天后，盘前盘后未定）" in text
         assert "11/09 424B5 发行说明书（增发或发债）" in text
         assert "1 条新闻" in text
 
@@ -180,3 +183,44 @@ class TestAnswers:
 
     def test_short_unknown(self) -> None:
         assert dict(answers(base()))["short"] == "暂无空头持仓数据。"
+
+
+class TestCompanyAndEarnings:
+    def test_usd_zh_trillions(self) -> None:
+        assert usd_zh(4.3e12) == "$4.30万亿"
+        assert usd_zh(3.03e11) == "$3,030.0亿"
+
+    def test_what_in_chinese_with_fundamentals(self) -> None:
+        profile = Profile(
+            "NVIDIA Corporation",
+            "Technology",
+            "Semiconductors",
+            "NVIDIA designs GPUs.",
+            "英伟达",
+            "全球最大的 AI 芯片设计公司。",
+        )
+        f = Fundamentals(4.3e12, 2.0e11, 1.5e11, date(2026, 7, 26), 4)
+        what = dict(answers(base(profile=profile, fundamentals=f)))["what"]
+        assert what.startswith("英伟达（NVIDIA Corporation）：全球最大的 AI 芯片设计公司。")
+        assert "市值 $4.30万亿" in what and "近四季营收 $2,000.0亿" in what
+        assert "毛利率 75.0%" in what and "财报截至 2026/07" in what
+
+    def test_what_without_financials_says_so(self) -> None:
+        assert "暂无财务数据" in dict(answers(base()))["what"]
+
+    def test_confirmed_earnings_with_weekday_and_timing(self) -> None:
+        cat = Catalysts(earnings=EarningsDate(date(2026, 11, 24), "bmo"))
+        text = dict(answers(base(catalysts=cat)))["catalyst"]
+        assert "11/24（周二）盘前发财报（今天）" in text
+        assert "财报 11/24 盘前" in headline(base(catalysts=cat))
+
+    def test_estimated_earnings_is_marked(self) -> None:
+        cat = Catalysts(earnings=EarningsDate(date(2027, 2, 23), None, confirmed=False))
+        text = dict(answers(base(catalysts=cat)))["catalyst"]
+        assert "下次财报预计 02/23（周二）前后（按上次财报日推算，未确认）" in text
+        assert "财报" not in headline(base(catalysts=cat))  # estimates never make the headline
+
+    def test_last_earnings_surprise(self) -> None:
+        last = LastEarnings(date(2026, 9, 1), "Jul 2026", 1.45, 1.39, 4.32)
+        text = dict(answers(base(catalysts=Catalysts(last_earnings=last))))["catalyst"]
+        assert "上次财报 09/01（周二）（Jul 2026 季度） EPS 1.45 vs 预期 1.39，超预期 4.3%" in text

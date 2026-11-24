@@ -14,8 +14,10 @@ from perp_monitor.insights.models import (
     Bucket,
     EarningsDate,
     Filing,
+    Fundamentals,
     FundingPattern,
     FundingPoint,
+    LastEarnings,
     NewsItem,
     Profile,
     ShortInterest,
@@ -88,6 +90,14 @@ class FakeSource:
     def spot(self, ticker: str) -> SpotStats | None:
         self._maybe_fail("spot")
         return SpotStats(date(2026, 11, 23), 10.0, 0.01, 0.02, 0.03, 5e6, 1e8)
+
+    def fundamentals(self, ticker: str) -> Fundamentals | None:
+        self._maybe_fail("fundamentals")
+        return Fundamentals(1e9, 5e8, 2e8, date(2026, 9, 30), 4)
+
+    def last_earnings(self, ticker: str) -> LastEarnings | None:
+        self._maybe_fail("last_earnings")
+        return LastEarnings(date(2026, 11, 3), "Sep 2026", 0.5, 0.4, 25.0)
 
     def news(self, ticker: str) -> tuple[NewsItem, ...]:
         self._maybe_fail("news")
@@ -243,3 +253,28 @@ def test_market_date_in_bundle() -> None:
     bundle = build_insights(REPORT, FakeSource(), late, workers=1)
     assert bundle.market_date == date(2026, 11, 24)
     assert bundle_to_json(bundle)["market_date"] == "2026-11-24"
+
+
+def test_next_earnings_prefers_the_calendar_then_estimates() -> None:
+    from perp_monitor.insights.collect import next_earnings
+
+    today = date(2026, 11, 23)
+    listed = EarningsDate(date(2026, 12, 8), "amc")
+    last = LastEarnings(date(2026, 9, 1), "Jul 2026", 1.45, 1.39, 4.3)
+    assert next_earnings(listed, last, today) == listed
+    est = next_earnings(None, last, today)
+    assert est is not None and not est.confirmed and est.day == date(2026, 12, 1)
+    old = LastEarnings(date(2026, 5, 1), "Mar 2026", None, None, None)
+    rolled = next_earnings(None, old, today)
+    assert rolled is not None and rolled.day == date(2027, 1, 29)  # 5/1 + 3 quarters
+    assert next_earnings(None, None, today) is None
+
+
+def test_cards_carry_fundamentals_and_english_summary() -> None:
+    bundle = build_insights(REPORT, FakeSource(), NOW, workers=1)
+    card = bundle.items[0]
+    assert card.fundamentals is not None and card.fundamentals.gross_margin == pytest.approx(0.4)
+    assert card.summary_en is not None and card.summary_en.startswith("FWDI makes things")
+    assert card.catalysts.last_earnings is not None
+    data = bundle_to_json(bundle)["items"][0]
+    assert data["fundamentals"]["gross_margin"] == pytest.approx(0.4)

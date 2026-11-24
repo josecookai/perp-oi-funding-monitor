@@ -37,6 +37,8 @@ class Config:
     sec_user_agent: str
     site_data_dir: Path
     insights_cache_path: Path
+    company_db_path: Path
+    company_zh_path: Path
     telegram_chat_id: str | None
     telegram_bot_token: str | None = field(default=None, repr=False)
 
@@ -125,6 +127,8 @@ def load_config(root: Path, env: Mapping[str, str]) -> Config:
         sec_user_agent=env.get("SEC_USER_AGENT") or "perp-oi-funding-monitor admin@example.com",
         site_data_dir=_path(root, env, "SITE_DATA_DIR", "web/data"),
         insights_cache_path=_path(root, env, "INSIGHTS_CACHE", "data/cache/insights.json"),
+        company_db_path=_path(root, env, "COMPANY_DB", "data/companies.db"),
+        company_zh_path=_path(root, env, "COMPANY_ZH", "assets/company_zh.json"),
         telegram_chat_id=chat_id,
         telegram_bot_token=token,
     )

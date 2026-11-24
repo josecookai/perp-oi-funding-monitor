@@ -1,21 +1,50 @@
 # perp-oi-funding-monitor
 
-A scanner for **US stock perps** on **Binance USDT-M** and **Hyperliquid** (HIP-3 dex `xyz`).
-Every 8 hours it records open interest (OI) and funding for each market, compares them with
-the previous run, and reports:
+**Live dashboard → [stock-perp-radar.vercel.app](https://stock-perp-radar.vercel.app)**
+(美股永续资金费率雷达，每 8 小时更新)
 
-1. OI change for every ticker (USD, %, contract %)
-2. OI gain, top 10
-3. OI loss, top 10
-4. Most negative funding, top 10
-5. Most positive funding, top 10
+A scanner and dashboard for **US stock perpetual futures** on **Binance USDT-M** and
+**Hyperliquid** (HIP-3 dex `xyz`). Every 8 hours it records open interest (OI) and funding
+for each market, compares them with the previous run, and publishes:
 
-The report also has a cross-venue table for tickers listed on both venues.
+- **A Telegram report:** OI change for every ticker, OI gain/loss top 10, most negative
+  and most positive funding top 10, and a cross-venue funding table.
+- **A dashboard:** the same data, plus a **catalyst card** for every ticker in each
+  venue's funding top 10. Each card answers five questions:
+  1. **What is this company?** Profile, sector and industry.
+  2. **Is the funding skew persistent or a one-off spike?** Based on 7 days of the
+     venue's own settled funding, in 8h buckets.
+  3. **What are the recent catalysts?** Earnings dates, SEC 8-K items, offerings and
+     periodic reports, relevant news, and spot moves over 1, 5 and 20 days.
+  4. **Is the perp volume meaningful?** OI, 24h volume, and OI as a share of the
+     stock's average daily dollar volume.
+  5. **Is it a crowded short?** FINRA short interest as a share of shares outstanding,
+     days to cover, and the change.
 
-A **dashboard** (`web/`, Next.js on Vercel) shows the same data plus a catalyst card for
-every ticker in each venue's funding top 10. See [Dashboard](#dashboard).
+![Dashboard, light theme](docs/dashboard-light.png)
 
-It only collects public data: no API keys, no orders.
+<details>
+<summary>Dark theme and the all-markets table</summary>
+
+![Dashboard, dark theme](docs/dashboard-dark.png)
+![All markets](docs/markets.png)
+
+</details>
+
+It only collects public data: no API keys, no orders. Every catalyst source (Nasdaq,
+Yahoo Finance RSS, SEC EDGAR, FINRA, Binance, Hyperliquid) is public and keyless.
+
+> **Not investment advice.** This repo organizes public market data. Catalyst cards list
+> facts next to each other; they do not claim cause and effect.
+
+## How it works
+
+```
+cron (every 8h, non-US host)
+  └─ perp-monitor run    Binance + Hyperliquid -> SQLite -> reports/*.md|json -> Telegram
+  └─ perp-monitor site   reports + history + catalyst cards -> web/data/*.json
+  └─ git push            -> Vercel rebuilds web/ (static Next.js) -> dashboard
+```
 
 ## Quick start
 
@@ -35,7 +64,7 @@ a dashboard), and refreshes `reports/latest.md` / `latest.json`.
 Runs from **this server's crontab** at 00:00, 08:00 and 16:00 UTC (`scheduler/crontab.example`):
 
 ```
-0 0,8,16 * * * /home/ubuntu/perp-oi-funding-monitor/scheduler/run_and_push.sh
+0 0,8,16 * * * /path/to/perp-oi-funding-monitor/scheduler/run_and_push.sh
 ```
 
 `scheduler/run_and_push.sh` appends its own log to `logs/cron.log`. It takes a lock, so

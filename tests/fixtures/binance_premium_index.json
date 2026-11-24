@@ -1,0 +1,152 @@
+[
+ {
+  "symbol": "SKHYNIXUSDT",
+  "markPrice": "870.49000000",
+  "indexPrice": "871.74091207",
+  "estimatedSettlePrice": "879.00565976",
+  "lastFundingRate": "-0.00033716",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795492800000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "NVDAUSDT",
+  "markPrice": "164.22648608",
+  "indexPrice": "164.29482922",
+  "estimatedSettlePrice": "164.89803951",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "QNTUSDT",
+  "markPrice": "153.27870899",
+  "indexPrice": "153.45246198",
+  "estimatedSettlePrice": "153.99948411",
+  "lastFundingRate": "0.00006866",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526001
+ },
+ {
+  "symbol": "SPCXUSD1",
+  "markPrice": "133.97000000",
+  "indexPrice": "133.98344977",
+  "estimatedSettlePrice": "134.31341124",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "CVXUSDT",
+  "markPrice": "1.13909388",
+  "indexPrice": "1.14359289",
+  "estimatedSettlePrice": "1.14799254",
+  "lastFundingRate": "0.00002751",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795492800000,
+  "time": 1795489526001
+ },
+ {
+  "symbol": "BBUSDT",
+  "markPrice": "0.00493000",
+  "indexPrice": "0.00495051",
+  "estimatedSettlePrice": "0.00497361",
+  "lastFundingRate": "0.00005000",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795492800000,
+  "time": 1795489526001
+ },
+ {
+  "symbol": "MSTRUSDT",
+  "markPrice": "82.14842425",
+  "indexPrice": "82.17494309",
+  "estimatedSettlePrice": "82.86966780",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "ETHUSDT",
+  "markPrice": "1681.62234884",
+  "indexPrice": "1682.78372093",
+  "estimatedSettlePrice": "1690.14002494",
+  "lastFundingRate": "-0.00002192",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526001
+ },
+ {
+  "symbol": "STXUSDT",
+  "markPrice": "0.25550000",
+  "indexPrice": "0.25604865",
+  "estimatedSettlePrice": "0.25765449",
+  "lastFundingRate": "0.00001471",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526001
+ },
+ {
+  "symbol": "TSLAUSDT",
+  "markPrice": "385.24629608",
+  "indexPrice": "385.39062434",
+  "estimatedSettlePrice": "386.44110527",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "XAUUSDT",
+  "markPrice": "3641.82560119",
+  "indexPrice": "3639.96091810",
+  "estimatedSettlePrice": "3648.91537132",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795492800000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "AAPLUSDT",
+  "markPrice": "349.85000000",
+  "indexPrice": "349.86881763",
+  "estimatedSettlePrice": "350.08071121",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "SPYUSDT",
+  "markPrice": "723.34744262",
+  "indexPrice": "723.23004419",
+  "estimatedSettlePrice": "724.06595997",
+  "lastFundingRate": "0.00009334",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "BRKBUSDT",
+  "markPrice": "575.30000000",
+  "indexPrice": "574.33173536",
+  "estimatedSettlePrice": "574.49678630",
+  "lastFundingRate": "0.00000000",
+  "interestRate": "0.00000000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526685
+ },
+ {
+  "symbol": "BTCUSDT",
+  "markPrice": "59964.86976812",
+  "indexPrice": "59987.90326087",
+  "estimatedSettlePrice": "60288.65743418",
+  "lastFundingRate": "0.00001233",
+  "interestRate": "0.00010000",
+  "nextFundingTime": 1795507200000,
+  "time": 1795489526001
+ }
+]

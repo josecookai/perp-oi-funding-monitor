@@ -1,0 +1,30 @@
+[
+ {
+  "symbol": "NVDAUSDT",
+  "sumOpenInterest": "2181693.63000000",
+  "sumOpenInterestValue": "357958553.16558450",
+  "CMCCirculatingSupply": "0.00000000",
+  "timestamp": 1795460400000
+ },
+ {
+  "symbol": "NVDAUSDT",
+  "sumOpenInterest": "2156814.53000000",
+  "sumOpenInterestValue": "356459317.33307266",
+  "CMCCirculatingSupply": "0.00000000",
+  "timestamp": 1795460700000
+ },
+ {
+  "symbol": "NVDAUSDT",
+  "sumOpenInterest": "2152165.87000000",
+  "sumOpenInterestValue": "354568860.68663430",
+  "CMCCirculatingSupply": "0.00000000",
+  "timestamp": 1795461000000
+ },
+ {
+  "symbol": "NVDAUSDT",
+  "sumOpenInterest": "2142017.39000000",
+  "sumOpenInterestValue": "352576062.39400000",
+  "CMCCirculatingSupply": "0.00000000",
+  "timestamp": 1795461300000
+ }
+]

@@ -1,0 +1,122 @@
+[
+ {
+  "symbol": "QNTUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1758379312808
+ },
+ {
+  "symbol": "CVXUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 4,
+  "disclaimer": false,
+  "updateTime": 1753270258730
+ },
+ {
+  "symbol": "STXUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1758702783699
+ },
+ {
+  "symbol": "BBUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 4,
+  "disclaimer": false,
+  "updateTime": 1715603493496
+ },
+ {
+  "symbol": "XAUUSDT",
+  "adjustedFundingRateCap": "0.00500000",
+  "adjustedFundingRateFloor": "-0.00500000",
+  "fundingIntervalHours": 4,
+  "disclaimer": false,
+  "updateTime": 1769796333728
+ },
+ {
+  "symbol": "TSLAUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1769775454495
+ },
+ {
+  "symbol": "MSTRUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1770380739254
+ },
+ {
+  "symbol": "NVDAUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1788998446666
+ },
+ {
+  "symbol": "AAPLUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1794445382169
+ },
+ {
+  "symbol": "SPYUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1789689782286
+ },
+ {
+  "symbol": "BRKBUSDT",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1779087686379
+ },
+ {
+  "symbol": "SKHYNIXUSDT",
+  "adjustedFundingRateCap": "0.00500000",
+  "adjustedFundingRateFloor": "-0.00500000",
+  "fundingIntervalHours": 4,
+  "disclaimer": false,
+  "updateTime": 1787871801784
+ },
+ {
+  "symbol": "SPCXUSD1",
+  "adjustedFundingRateCap": "0.02000000",
+  "adjustedFundingRateFloor": "-0.02000000",
+  "fundingIntervalHours": 8,
+  "disclaimer": false,
+  "updateTime": 1784285483742
+ },
+ {
+  "symbol": "ETHUSDT",
+  "adjustedFundingRateCap": "0.00300",
+  "adjustedFundingRateFloor": "-0.00300",
+  "fundingIntervalHours": 8,
+  "disclaimer": true,
+  "updateTime": null
+ },
+ {
+  "symbol": "BTCUSDT",
+  "adjustedFundingRateCap": "0.00300",
+  "adjustedFundingRateFloor": "-0.00300",
+  "fundingIntervalHours": 8,
+  "disclaimer": true,
+  "updateTime": null
+ }
+]

@@ -1,0 +1,72 @@
+{
+ "NVDAUSDT": {
+  "symbol": "NVDAUSDT",
+  "openInterest": "2015785.37",
+  "time": 1795489524243
+ },
+ "TSLAUSDT": {
+  "symbol": "TSLAUSDT",
+  "openInterest": "163545.60",
+  "time": 1795489523738
+ },
+ "AAPLUSDT": {
+  "symbol": "AAPLUSDT",
+  "openInterest": "142756.40",
+  "time": 1795489523828
+ },
+ "BRKBUSDT": {
+  "symbol": "BRKBUSDT",
+  "openInterest": "4912.58",
+  "time": 1795489519102
+ },
+ "MSTRUSDT": {
+  "symbol": "MSTRUSDT",
+  "openInterest": "537522.79",
+  "time": 1795489524096
+ },
+ "SPYUSDT": {
+  "symbol": "SPYUSDT",
+  "openInterest": "58738.84",
+  "time": 1795489524083
+ },
+ "SKHYNIXUSDT": {
+  "symbol": "SKHYNIXUSDT",
+  "openInterest": "388642.91",
+  "time": 1795489523328
+ },
+ "XAUUSDT": {
+  "symbol": "XAUUSDT",
+  "openInterest": "101474.311",
+  "time": 1795489524085
+ },
+ "BTCUSDT": {
+  "symbol": "BTCUSDT",
+  "openInterest": "95281.477",
+  "time": 1795489522666
+ },
+ "ETHUSDT": {
+  "symbol": "ETHUSDT",
+  "openInterest": "2330242.706",
+  "time": 1795489523283
+ },
+ "BBUSDT": {
+  "symbol": "BBUSDT",
+  "openInterest": "296384558",
+  "time": 1795489523231
+ },
+ "CVXUSDT": {
+  "symbol": "CVXUSDT",
+  "openInterest": "1153017.3",
+  "time": 1795489520240
+ },
+ "QNTUSDT": {
+  "symbol": "QNTUSDT",
+  "openInterest": "98532.8",
+  "time": 1795489523218
+ },
+ "STXUSDT": {
+  "symbol": "STXUSDT",
+  "openInterest": "18055516",
+  "time": 1795489526168
+ }
+}

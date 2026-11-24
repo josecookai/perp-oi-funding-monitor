@@ -1,0 +1,13 @@
+# Venue name -> canonical ticker, and venue names that must never be read as stocks.
+
+[binance.aliases]
+BRKB = "BRK.B"
+
+[binance.exclude]
+
+[hyperliquid.aliases]
+
+[hyperliquid.exclude]
+CL = "WTI crude oil on xyz, not Colgate-Palmolive"
+GOLD = "Gold commodity on xyz, not Gold.com Inc."
+SILVER = "Silver commodity on xyz"

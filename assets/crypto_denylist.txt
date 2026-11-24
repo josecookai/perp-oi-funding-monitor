@@ -1,0 +1,32 @@
+# Crypto-native symbols that must never appear in a report. The run aborts if one does.
+# Only list symbols that are not also US stock tickers on either venue.
+BTC
+ETH
+SOL
+XRP
+DOGE
+BNB
+ADA
+TRX
+AVAX
+TON
+SUI
+DOT
+LTC
+BCH
+HYPE
+PEPE
+SHIB
+WBTC
+USDT
+USDC
+ENA
+AAVE
+UNI
+NEAR
+APT
+ARB
+OP
+XLM
+HBAR
+FIL

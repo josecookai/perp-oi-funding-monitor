@@ -1,0 +1,185 @@
+# US stock perp allowlist: one canonical ticker per line (US-listed single stocks + ADRs).
+#
+# Source: built 2026-11-24 from the stock perps listed on Binance USDT-M
+# (underlyingType=EQUITY) and Hyperliquid's xyz dex, keeping only names that SEC's
+# company_tickers_exchange.json shows on Nasdaq or NYSE.
+#
+# Deliberately excluded:
+#   ETFs and trusts: SPY, IBIT, UVXY, ZCSH (Zcash ETF), BWET, and every ETF/leveraged ETF
+#                    not in SEC's company list (QQQ, SOXL, TQQQ, NVDL, ...)
+#   STRC         - Strategy preferred stock, not common stock
+#   OURA         - no US exchange listing in SEC data yet
+#   GOLD, CL     - on Hyperliquid xyz these are gold and crude oil, not Gold.com / Colgate
+#   KR/HK/CN stocks, commodities, FX, indices (not US-listed)
+#
+# Maintain with:
+#   perp-monitor allowlist suggest     # venue stock perps not in this file yet
+#   perp-monitor allowlist validate    # format, duplicates, crypto denylist, SEC listing check
+#   perp-monitor allowlist add TICKER [TICKER...]
+#   perp-monitor allowlist remove TICKER [TICKER...]
+# Venue-specific aliases and exclusions live in assets/symbol_overrides.toml.
+AAOI
+AAPL
+ABBV
+ACN
+ADBE
+AGPU
+AKAM
+ALAB
+AMAT
+AMC
+AMD
+AMGN
+AMZN
+ANET
+ANT
+APLD
+APP
+ARM
+ASML
+ASTS
+AVGO
+AXTI
+BABA
+BAC
+BB
+BE
+BIRD
+BMNR
+BNC
+BOT
+BRK.B
+BSP
+BX
+CAT
+CBRS
+CCJ
+CEG
+CIEN
+COHR
+COIN
+COST
+CRCL
+CRDO
+CRM
+CRML
+CRWD
+CRWV
+CSCO
+CVNA
+CVX
+CYPH
+DDOG
+DELL
+DIS
+DJT
+DKNG
+EBAY
+EQT
+ETN
+FLEX
+FLNC
+FRHC
+FWDI
+GEV
+GLW
+GME
+GOOGL
+GPRO
+GS
+GTLB
+HD
+HIMS
+HOOD
+HPE
+HUT
+IBKR
+IBM
+ICE
+INTC
+IONQ
+IREN
+JNJ
+JPM
+KLAC
+KO
+LITE
+LLY
+LRCX
+MARA
+MCD
+MDB
+MDT
+MELI
+META
+MP
+MRK
+MRNA
+MRVL
+MSFT
+MSTR
+MU
+NBIS
+NET
+NFLX
+NIO
+NKE
+NOK
+NOW
+NU
+NVDA
+NVO
+OKLO
+ONDS
+ORCL
+OXY
+PANW
+PATH
+PAYP
+PDD
+PENG
+PFE
+PLTR
+PYPL
+QCOM
+QNT
+RDDT
+RDW
+RIVN
+RKLB
+RUM
+SECZ
+SHAZ
+SHOP
+SKHY
+SMCI
+SMR
+SNDK
+SNOW
+SNPS
+SOFI
+SONY
+SPCX
+STM
+TEAM
+TEM
+TER
+TSLA
+TSM
+TTWO
+TWST
+TXN
+UBER
+UMC
+UNH
+USAR
+V
+VKTX
+VRT
+VST
+WDC
+WEN
+WMT
+XOM
+ZM
+ZS

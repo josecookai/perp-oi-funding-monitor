@@ -1,0 +1,50 @@
+{
+ "data": {
+  "ModuleTitle": {
+   "label": "Module Title",
+   "value": "Company Description"
+  },
+  "CompanyName": {
+   "label": "Company Name",
+   "value": "Forward Industries, Inc."
+  },
+  "Symbol": {
+   "label": "Symbol",
+   "value": "FWDI"
+  },
+  "Address": {
+   "label": "Address",
+   "value": null
+  },
+  "Phone": {
+   "label": "Phone",
+   "value": null
+  },
+  "Industry": {
+   "label": "Industry",
+   "value": "Finance: Consumer Services"
+  },
+  "Sector": {
+   "label": "Sector",
+   "value": "Finance"
+  },
+  "Region": {
+   "label": "Region",
+   "value": "North America"
+  },
+  "CompanyDescription": {
+   "label": "Company Description",
+   "value": "Forward Industries, Inc. (NASDAQ: FWDI) is a Solana focused digital asset treasury company, with the strategy to buy, hold, stake, trade, invest in, and grow SOL and SOL related digital assets, protocols and businesses. Our mission is to expand and strengthen the Solana ecosystem by acquiring and staking SOL and engaging with, providing tools to and investing in the Solana network, Solana developers and Solana related projects in order to increase shareholder value. In connection with a private placement transaction in September 2025, we launched our digital asset treasury strategy supported by industry leading investors and operating partners including Galaxy Digital and Jump Crypto."
+  },
+  "CompanyUrl": {
+   "label": "Company Url",
+   "value": "https://www.forwardindustries.com"
+  }
+ },
+ "message": null,
+ "status": {
+  "rCode": 200,
+  "bCodeMessage": null,
+  "developerMessage": null
+ }
+}

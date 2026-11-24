@@ -1,0 +1,27 @@
+{
+ "8": {
+  "cik_str": 1067983,
+  "ticker": "BRK-B",
+  "title": "BERKSHIRE HATHAWAY INC"
+ },
+ "82": {
+  "cik_str": 1690820,
+  "ticker": "CVNA",
+  "title": "CARVANA CO."
+ },
+ "1720": {
+  "cik_str": 1607678,
+  "ticker": "VKTX",
+  "title": "Viking Therapeutics, Inc."
+ },
+ "3215": {
+  "cik_str": 2081119,
+  "ticker": "BOT",
+  "title": "RoboStrategy, Inc."
+ },
+ "3561": {
+  "cik_str": 38264,
+  "ticker": "FWDI",
+  "title": "Forward Industries, Inc."
+ }
+}

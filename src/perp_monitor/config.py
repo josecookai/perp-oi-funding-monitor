@@ -35,6 +35,8 @@ class Config:
     hl_info_url: str
     http_timeout_seconds: float
     sec_user_agent: str
+    site_data_dir: Path
+    insights_cache_path: Path
     telegram_chat_id: str | None
     telegram_bot_token: str | None = field(default=None, repr=False)
 
@@ -121,6 +123,8 @@ def load_config(root: Path, env: Mapping[str, str]) -> Config:
         hl_info_url=env.get("HL_INFO_URL") or "https://api.hyperliquid.xyz/info",
         http_timeout_seconds=_number(env, "HTTP_TIMEOUT_SECONDS", 15, minimum=1),
         sec_user_agent=env.get("SEC_USER_AGENT") or "perp-oi-funding-monitor admin@example.com",
+        site_data_dir=_path(root, env, "SITE_DATA_DIR", "web/data"),
+        insights_cache_path=_path(root, env, "INSIGHTS_CACHE", "data/cache/insights.json"),
         telegram_chat_id=chat_id,
         telegram_bot_token=token,
     )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import TracebackType
@@ -155,3 +156,41 @@ class SnapshotStore:
 
     def run_count(self) -> int:
         return self._conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
+
+    def history(self, since: datetime) -> tuple[tuple[HistoryRun, ...], tuple[HistoryRow, ...]]:
+        """Runs started at or after `since` (oldest first) and their snapshot rows."""
+        runs = tuple(
+            HistoryRun(run_id, datetime.fromisoformat(started_at))
+            for run_id, started_at in self._conn.execute(
+                "SELECT id, started_at FROM runs WHERE started_at >= ? ORDER BY started_at",
+                (_iso(since),),
+            )
+        )
+        rows = tuple(
+            HistoryRow(*row)
+            for row in self._conn.execute(
+                "SELECT s.run_id, s.venue, s.ticker, s.market, s.funding_8h, s.oi_usd, "
+                "s.mark_price, s.volume_24h_usd FROM snapshots s JOIN runs r ON r.id = s.run_id "
+                "WHERE r.started_at >= ? ORDER BY r.started_at",
+                (_iso(since),),
+            )
+        )
+        return runs, rows
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryRun:
+    run_id: int
+    started_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryRow:
+    run_id: int
+    venue: str
+    ticker: str
+    market: str
+    funding_8h: float
+    oi_usd: float
+    mark_price: float
+    volume_24h_usd: float

@@ -1,0 +1,13 @@
+{
+ "data": {
+  "symbol": "CVNA",
+  "companyName": "Carvana Co. Class A Common Stock",
+  "stockType": "Class A Common Stock",
+  "exchange": "NYSE"
+ },
+ "status": {
+  "rCode": 200,
+  "bCodeMessage": null,
+  "developerMessage": null
+ }
+}

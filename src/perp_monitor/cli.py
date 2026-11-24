@@ -1,13 +1,14 @@
-"""Command line: `perp-monitor run` and `perp-monitor allowlist ...`."""
+"""Command line: `perp-monitor run`, `perp-monitor site` and `perp-monitor allowlist ...`."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from html import escape
 from pathlib import Path
 
@@ -28,10 +29,15 @@ from perp_monitor.config import Config, ConfigError, load_config
 from perp_monitor.guard import CryptoLeakError
 from perp_monitor.http import HttpError, build_client
 from perp_monitor.hyperliquid_client import HyperliquidClient, HyperliquidError, stock_base_names
+from perp_monitor.insights.cache import JsonCache
+from perp_monitor.insights.collect import build_insights
+from perp_monitor.insights.live_source import LiveSource
+from perp_monitor.insights.serialize import bundle_to_json
 from perp_monitor.notify import NotifyError, TelegramNotifier
 from perp_monitor.overrides import OverridesError, load_overrides
 from perp_monitor.pipeline import RunOutcome, run_cycle
 from perp_monitor.sec import fetch_listings, sec_issues
+from perp_monitor.site_export import HISTORY_DAYS, export_site, history_to_json
 from perp_monitor.store import SnapshotStore
 
 log = logging.getLogger("perp_monitor")
@@ -48,6 +54,10 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--no-notify", action="store_true", help="skip Telegram")
     run.add_argument(
         "--no-store", action="store_true", help="dry run: print the report, write and store nothing"
+    )
+    site = sub.add_parser("site", help="write dashboard data: report, history, insights")
+    site.add_argument(
+        "--skip-insights", action="store_true", help="keep the previous insights.json"
     )
     allow = sub.add_parser("allowlist", help="maintain assets/stocks_allowlist.txt")
     allow_sub = allow.add_subparsers(dest="action", required=True)
@@ -177,9 +187,59 @@ def _edit(args: argparse.Namespace, config: Config) -> int:
     return EXIT_OK
 
 
+def _insights(
+    config: Config, http: httpx.Client, report: dict[str, object], now: datetime
+) -> tuple[dict[str, object] | None, str | None]:
+    cache = JsonCache(config.insights_cache_path, now)
+    source = LiveSource(
+        http,
+        cache,
+        now,
+        binance_base_url=config.binance_base_url,
+        hl_info_url=config.hl_info_url,
+        sec_user_agent=config.sec_user_agent,
+    )
+    try:
+        bundle = build_insights(report, source, now)
+        data = bundle_to_json(bundle)
+    except Exception as exc:
+        log.exception("insights failed; keeping the previous insights.json")
+        return None, type(exc).__name__
+    try:
+        cache.save()
+    except OSError as exc:
+        log.warning("could not save the insights cache: %s", exc)
+    for error in bundle.errors:
+        log.warning("insights: %s", error)
+    return data, None
+
+
+def _site(args: argparse.Namespace, config: Config, http: httpx.Client) -> int:
+    latest = config.reports_dir / "latest.json"
+    if not latest.is_file():
+        log.error("no report at %s; run `perp-monitor run` first", latest)
+        return EXIT_PARTIAL
+    report = json.loads(latest.read_text())
+    if not any(s.get("rows") for s in report.get("sections", ())):
+        log.error("%s has no markets; not exporting (the site keeps the last good data)", latest)
+        return EXIT_PARTIAL
+    now = datetime.now(UTC).replace(microsecond=0)
+    with SnapshotStore(config.db_path) as store:
+        runs, rows = store.history(now - timedelta(days=HISTORY_DAYS))
+    insights, error = (None, None) if args.skip_insights else _insights(config, http, report, now)
+    paths = export_site(
+        config.site_data_dir, report, history_to_json(runs, rows), insights, now, error
+    )
+    for path in paths:
+        log.info("wrote %s", path)
+    return EXIT_PARTIAL if error else EXIT_OK
+
+
 def _dispatch(args: argparse.Namespace, config: Config, http: httpx.Client) -> int:
     if args.command == "run":
         return _run(args, config, http)
+    if args.command == "site":
+        return _site(args, config, http)
     if args.action == "validate":
         return _validate(args, config, http)
     if args.action == "suggest":
@@ -210,7 +270,7 @@ def main(
             return _dispatch(args, config, client)
     except (ConfigError, AllowlistError, OverridesError) as exc:
         log.error("%s", exc)
-        return EXIT_PARTIAL if args.command == "allowlist" else EXIT_ABORTED
+        return EXIT_ABORTED if args.command == "run" else EXIT_PARTIAL
     except CryptoLeakError as exc:
         log.critical("run aborted, nothing stored or sent: %s", exc)
         return EXIT_ABORTED

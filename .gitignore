@@ -10,3 +10,6 @@ htmlcov/
 data/*.db
 data/*.db-journal
 logs/
+data/cache/
+.vercel
+.env*.local

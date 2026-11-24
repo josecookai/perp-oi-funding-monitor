@@ -1,0 +1,56 @@
+[
+ {
+  "symbolCode": "BOT",
+  "daysToCoverQuantity": 2.16,
+  "previousShortPositionQuantity": 974879,
+  "averageDailyVolumeQuantity": 416280,
+  "changePercent": -7.85,
+  "currentShortPositionQuantity": 898372,
+  "settlementDate": "2026-10-15"
+ },
+ {
+  "symbolCode": "CVNA",
+  "daysToCoverQuantity": 7.59,
+  "previousShortPositionQuantity": 67380242,
+  "averageDailyVolumeQuantity": 8815574,
+  "changePercent": -0.66,
+  "currentShortPositionQuantity": 66937592,
+  "settlementDate": "2026-10-15"
+ },
+ {
+  "symbolCode": "FWDI",
+  "daysToCoverQuantity": 1.99,
+  "previousShortPositionQuantity": 4597495,
+  "averageDailyVolumeQuantity": 2049074,
+  "changePercent": -11.44,
+  "currentShortPositionQuantity": 4071587,
+  "settlementDate": "2026-10-15"
+ },
+ {
+  "symbolCode": "BOT",
+  "daysToCoverQuantity": 3.14,
+  "previousShortPositionQuantity": 898372,
+  "averageDailyVolumeQuantity": 413443,
+  "changePercent": 44.49,
+  "currentShortPositionQuantity": 1298082,
+  "settlementDate": "2026-10-30"
+ },
+ {
+  "symbolCode": "CVNA",
+  "daysToCoverQuantity": 6.2,
+  "previousShortPositionQuantity": 66937592,
+  "averageDailyVolumeQuantity": 10499229,
+  "changePercent": -2.76,
+  "currentShortPositionQuantity": 65093337,
+  "settlementDate": "2026-10-30"
+ },
+ {
+  "symbolCode": "FWDI",
+  "daysToCoverQuantity": 3.91,
+  "previousShortPositionQuantity": 4071587,
+  "averageDailyVolumeQuantity": 1331459,
+  "changePercent": 27.89,
+  "currentShortPositionQuantity": 5207169,
+  "settlementDate": "2026-10-30"
+ }
+]

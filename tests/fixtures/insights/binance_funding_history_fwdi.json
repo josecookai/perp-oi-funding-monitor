@@ -1,0 +1,149 @@
+[
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1794902400001,
+  "fundingRate": "0.00229670",
+  "markPrice": "4.31246761",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1794931200001,
+  "fundingRate": "0.00010335",
+  "markPrice": "4.26100000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1794960000001,
+  "fundingRate": "0.00027421",
+  "markPrice": "4.42900000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1794988800001,
+  "fundingRate": "0.00000000",
+  "markPrice": "4.33810125",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795017600001,
+  "fundingRate": "0.00000000",
+  "markPrice": "4.09821087",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795046400001,
+  "fundingRate": "-0.00067483",
+  "markPrice": "4.10400000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795075200001,
+  "fundingRate": "0.00131365",
+  "markPrice": "4.14100000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795104000001,
+  "fundingRate": "0.00057203",
+  "markPrice": "4.07755132",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795132800001,
+  "fundingRate": "-0.00011661",
+  "markPrice": "3.97800000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795161600001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.91500000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795190400001,
+  "fundingRate": "-0.00069229",
+  "markPrice": "3.51104699",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795219200001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.39392217",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795248000001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.35864170",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795276800001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.38800000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795305600001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.38900000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795334400001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.38839930",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795363200001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.37700000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795392000001,
+  "fundingRate": "0.00009027",
+  "markPrice": "3.41000000",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795420800001,
+  "fundingRate": "0.00000000",
+  "markPrice": "3.55919831",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795449600001,
+  "fundingRate": "0.00033709",
+  "markPrice": "3.83372623",
+  "rateType": "Regular"
+ },
+ {
+  "symbol": "FWDIUSDT",
+  "fundingTime": 1795478400001,
+  "fundingRate": "-0.00535878",
+  "markPrice": "3.73600000",
+  "rateType": "Regular"
+ }
+]

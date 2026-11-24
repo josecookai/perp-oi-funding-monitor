@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Light is the default; the toggle stamps data-theme on <html>. */
+:root {
+  color-scheme: light;
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --card-soft: #f8fafc;
+  --line: #e5e9f0;
+  --line-strong: #d4dae3;
+  --ink: #0f172a;
+  --ink-2: #475569;
+  --ink-3: #7c8799;
+  --brand: #2f6fde;
+  --brand-soft: #e7efff;
+  --chip: #eef1f5;
+  --up: #12a594;
+  --down: #e5484d;
+  --up-soft: #e3f6f2;
+  --down-soft: #fdebec;
+  --warn: #b7791f;
+  --warn-soft: #fdf3e1;
+  --mid: #e8ebf0;
+  --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.03);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0e17;
+  --card: #0d141d;
+  --card-soft: #111a25;
+  --line: #1e293b;
+  --line-strong: #2a3647;
+  --ink: #f0f0f0;
+  --ink-2: #a3b0c2;
+  --ink-3: #6b7a90;
+  --brand: #5ba0ff;
+  --brand-soft: #12223a;
+  --chip: #172231;
+  --up: #17a88c;
+  --down: #f2555a;
+  --up-soft: #0e2a26;
+  --down-soft: #2e1417;
+  --warn: #ffb800;
+  --warn-soft: #2b220c;
+  --mid: #1e293b;
+  --shadow: none;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-card-soft: var(--card-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-chip: var(--chip);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-up-soft: var(--up-soft);
+  --color-down-soft: var(--down-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: var(--font-inter), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tone-up {
+  color: var(--up);
+}
+.tone-down {
+  color: var(--down);
+}
+.tone-flat {
+  color: var(--ink-2);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* Venue filter: hide cards of the other venue without client-side re-rendering. */
+[data-venue-filter="binance"] [data-venue="hyperliquid"],
+[data-venue-filter="hyperliquid"] [data-venue="binance"] {
+  display: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

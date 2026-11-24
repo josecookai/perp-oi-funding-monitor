@@ -12,6 +12,9 @@ the previous run, and reports:
 
 The report also has a cross-venue table for tickers listed on both venues.
 
+A **dashboard** (`web/`, Next.js on Vercel) shows the same data plus a catalyst card for
+every ticker in each venue's funding top 10. See [Dashboard](#dashboard).
+
 It only collects public data: no API keys, no orders.
 
 ## Quick start
@@ -36,8 +39,9 @@ Runs from **this server's crontab** at 00:00, 08:00 and 16:00 UTC (`scheduler/cr
 ```
 
 `scheduler/run_and_push.sh` appends its own log to `logs/cron.log`. It takes a lock, so
-overlapping runs (including a manual `./run.sh`) are skipped. It then runs one cycle and
-commits and pushes the new `reports/` files. If a push fails, the commits stay local and
+overlapping runs (including a manual `./run.sh`) are skipped. It runs one cycle, then
+`perp-monitor site` to refresh `web/data/`, and commits and pushes `reports/` and
+`web/data/`. Each push to `main` redeploys the dashboard. If a push fails, the commits stay local and
 the next run pushes them.
 
 **Why not a GitHub Actions cron?** Binance answers US IP addresses with HTTP 451, and
@@ -127,7 +131,12 @@ src/perp_monitor/
   notify.py              Telegram sender (token redacted from errors)
   sec.py                 SEC listing lookup for allowlist validation
   pipeline.py            one full cycle
-  cli.py                 `perp-monitor run|allowlist ...`
+  site_export.py         web/data/*.json for the dashboard
+  cli.py                 `perp-monitor run|site|allowlist ...`
+  insights/              catalyst cards: sources (nasdaq, news, sec_filings, finra,
+                         funding_history), rules (analysis), text (narrative),
+                         orchestration (collect, live_source), cache, serialize
+web/                     Next.js dashboard (reads web/data/*.json)
 ```
 
 ## Tests
@@ -155,6 +164,49 @@ non-stock dex can only leak a market whose name equals an allowlisted ticker. Ch
 new dex's market list before adding it. As of 2026-11, `io` and `para` also list some
 stocks, but `para` is mostly crypto indices and rates.
 
-## Roadmap
+## Dashboard
 
-- Vercel dashboard reading `reports/*.json` (`schema_version` 1)
+`web/` is a Next.js 16 app (App Router, Tailwind 4). It reads `web/data/*.json` at build
+time, so every page is static. The Vercel project's Root Directory is `web`.
+
+```bash
+.venv/bin/perp-monitor site                  # write web/data: report, history, insights, meta
+.venv/bin/perp-monitor site --skip-insights  # same, but keep the previous insights.json
+cd web && npm install && npm run dev         # local preview on :3000
+```
+
+| File | Content |
+|---|---|
+| `report.json` | copy of `reports/latest.json` |
+| `history.json` | last 30 days of runs from SQLite: per market `[run, funding_8h, oi_usd, price, volume]` |
+| `insights.json` | one card per ticker in each venue's funding top 10 (below) |
+| `meta.json` | build time, and `insights_error` if the cards could not be refreshed |
+
+### Catalyst cards
+
+Each card answers five questions in Chinese: what the company is, whether the funding
+skew is persistent, recent catalysts, whether the perp volume means anything, and whether
+the stock is a crowded short. Sources, all public and keyless:
+
+| Data | Source | Cache |
+|---|---|---|
+| Company profile, market cap | Nasdaq `api.nasdaq.com` (`/company/{s}/company-profile`, `/quote/{s}/summary`) | 7 days / 20 h |
+| Daily bars (returns, 20-session dollar volume) | Nasdaq `/quote/{s}/historical` | none |
+| Earnings dates (−7 to +14 days) | Nasdaq `/calendar/earnings?date=` | none |
+| News (last 7 days) | Yahoo Finance RSS, kept only if the headline or summary names the ticker or company | none |
+| Filings (last 14 days): 8-K items, 424B offerings, 10-Q/K, 6-K | SEC `data.sec.gov/submissions` | CIK map 7 days |
+| Short interest | FINRA consolidated short interest (twice monthly) | none |
+| 7-day funding history | Binance `/fapi/v1/fundingRate`, Hyperliquid `fundingHistory` | none |
+
+The cache lives in `data/cache/insights.json` (git-ignored). A failed source is recorded
+on the card (`errors`) and the card is still built. If the whole step fails, the previous
+`insights.json` is kept and the site shows a notice.
+
+Rules (constants in `src/perp_monitor/insights/analysis.py`, shown on the site's
+方法说明 page):
+
+| Question | Rule |
+|---|---|
+| Volume meaningful? | noise: OI < $250K or 24h volume < $100K; meaningful: OI ≥ $1M and volume ≥ $1M; otherwise thin |
+| Funding persistent? | share of 8h buckets in the last 7 days with the current sign: ≥ 60% persistent, ≤ 25% spike, else mixed; < 3 buckets: insufficient |
+| Crowded short? | short shares ÷ shares outstanding (market cap ÷ close): ≥ 15% high, ≥ 8% elevated, ≥ 4% moderate; a lower share with ≥ 7 days to cover also counts as moderate |

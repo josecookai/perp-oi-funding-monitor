@@ -42,7 +42,7 @@ def _decode(response: httpx.Response, where: str) -> Any:
         raise HttpError(f"{where}: invalid JSON in response", response.status_code) from exc
 
 
-def request_json(
+def request(
     client: httpx.Client,
     method: str,
     url: str,
@@ -55,8 +55,8 @@ def request_json(
     label: str | None = None,
     policy: RetryPolicy = DEFAULT_POLICY,
     sleep: Callable[[float], None] = time.sleep,
-) -> Any:
-    """Send a request and return decoded JSON.
+) -> httpx.Response:
+    """Send a request and return the first successful (< 400) response.
 
     Retries transport errors and 429/5xx responses with linear backoff. Other 4xx
     responses fail at once, because retrying them does not help.
@@ -76,7 +76,7 @@ def request_json(
             last_error = HttpError(f"{where}: {type(exc).__name__}: {detail}")
         else:
             if response.status_code < 400:
-                return _decode(response, where)
+                return response
             message = f"{where}: HTTP {response.status_code}: {response.text[:200]}"
             last_error = HttpError(message, response.status_code)
             if response.status_code not in RETRYABLE_STATUS:
@@ -86,3 +86,33 @@ def request_json(
             sleep(policy.backoff_seconds * attempt)
     assert last_error is not None
     raise last_error
+
+
+def request_json(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    *,
+    label: str | None = None,
+    **kwargs: Any,
+) -> Any:
+    """`request` and decode the body as JSON."""
+    response = request(client, method, url, label=label, **kwargs)
+    return _decode(response, label or f"{method} {url}")
+
+
+def request_text(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    *,
+    max_bytes: int = 2_000_000,
+    label: str | None = None,
+    **kwargs: Any,
+) -> str:
+    """`request` and return the body as text, refusing bodies over `max_bytes`."""
+    response = request(client, method, url, label=label, **kwargs)
+    if len(response.content) > max_bytes:
+        where = label or f"{method} {url}"
+        raise HttpError(f"{where}: body over {max_bytes} bytes", response.status_code)
+    return response.text

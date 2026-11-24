@@ -222,7 +222,10 @@ cd web && npm install && npm run dev         # local preview on :3000
 ```
 
 `deploy_site.sh` needs a logged-in Vercel CLI and a linked project (`vercel link`, which
-writes the git-ignored `.vercel/project.json`).
+writes the git-ignored `.vercel/project.json`). It uploads the build as one `--archive=tgz`
+file. Without that, each deploy uploads about 1,300 changed files, and the Hobby plan
+allows 5,000 file uploads a day (`api-upload-free`). An hourly deploy is 24 of the 100
+deployments a day the plan allows.
 
 | File | Content |
 |---|---|

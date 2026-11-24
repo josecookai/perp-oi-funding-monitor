@@ -16,9 +16,12 @@ vercel build --prod --yes >/dev/null 2>&1 || {
   echo "deploy_site: vercel build failed; rerun by hand to see the error" >&2
   exit 1
 }
+# --archive=tgz uploads the build as one file. Without it each deploy uploads ~1,300
+# changed files, and the Hobby plan allows 5,000 file uploads a day (api-upload-free).
 # Without a TTY the CLI prints JSON on stdout and the human summary on stderr.
-summary=$(vercel deploy --prebuilt --prod --yes 2>&1 >/dev/null) || {
+summary=$(vercel deploy --prebuilt --prod --yes --archive=tgz 2>&1 >/dev/null) || {
   echo "deploy_site: vercel deploy failed: $(echo "$summary" | tail -3)" >&2
   exit 1
 }
-echo "deploy_site: $(echo "$summary" | grep -E "Production|Aliased" | tr -s ' ' | paste -sd ';')"
+clean=$(printf '%s\n' "$summary" | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' | tr '\r' '\n')
+echo "deploy_site: $(printf '%s\n' "$clean" | grep -E "Aliased" | tail -1 | tr -s ' ')"

@@ -11,7 +11,7 @@ const HEATMAP_PER_VENUE = 24;
 function Snapshot() {
   return (
     <section className="card p-4">
-      <h2 className="text-[15px] font-extrabold">本期快照</h2>
+      <h2 className="text-[15px] font-extrabold">最新快照</h2>
       <div className="num mt-1 text-[12px] text-ink-3">
         {utcStamp(report.generated_at)}
         {report.manual ? " · 手动" : ""}
@@ -24,7 +24,7 @@ function Snapshot() {
               <dt className="text-[12px] text-ink-3">{v === "binance" ? "Binance" : "Hyperliquid xyz"}</dt>
               <dd className="num mt-0.5 text-[16px] font-bold">{s ? usdZh(s.total_oi_usd) : "—"}</dd>
               <dd className="text-[11px] text-ink-3">
-                {s?.error ? "本期失败" : `${s?.rows.length ?? 0} 个市场 · 窗口 ${s?.window.hours?.toFixed(1) ?? "首期"}h`}
+                {s?.error ? "本次抓取失败" : `${s?.rows.length ?? 0} 个市场 · ΔOI 窗口 ${s?.window.hours?.toFixed(1) ?? "—"}h`}
               </dd>
             </div>
           );
@@ -56,11 +56,11 @@ function Movers({ kind }: { kind: "oi_gain" | "oi_loss" }) {
       <div className="flex items-baseline justify-between">
         <h2 className="text-[15px] font-extrabold">{kind === "oi_gain" ? "OI 增幅榜" : "OI 降幅榜"}</h2>
         <Link href="/oi" className="text-[12px] text-ink-3 hover:text-ink">
-          本期 ΔOI · 全部 →
+          近 8h ΔOI · 全部 →
         </Link>
       </div>
       {list.length === 0 ? (
-        <p className="mt-3 text-[13px] text-ink-3">首期运行，下一期开始有变化数据。</p>
+        <p className="mt-3 text-[13px] text-ink-3">数据积累中，8 小时后开始有变化数据。</p>
       ) : (
         <ol className="mt-2">
           {list.map(({ venue, row }, i) => (

@@ -30,7 +30,7 @@ const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
   { key: "price", label: "标记价", align: "right" },
   { key: "funding8h", label: "资金费率 / 8h", align: "right" },
   { key: "oiUsd", label: "持仓 OI", align: "right" },
-  { key: "dOiUsd", label: "ΔOI（本期）", align: "right" },
+  { key: "dOiUsd", label: "ΔOI（近 8h）", align: "right" },
   { key: "dOiPct", label: "ΔOI %", align: "right" },
   { key: "volume", label: "24h 成交", align: "right" },
   { key: "turnover", label: "成交 / OI", align: "right" },

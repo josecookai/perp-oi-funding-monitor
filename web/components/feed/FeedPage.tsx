@@ -39,12 +39,12 @@ export function FeedPage({ side }: { side: Side }) {
         </p>
         {(stale || meta.insights_error) && (
           <p className="mx-4 mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[12px] text-warn sm:mx-5">
-            本期催化剂卡片没有更新成功，下方是 {utcStamp(insights.report_generated_at)} 那一期的卡片；费率和 OI 以“全部市场”页为准。
+            最新一次催化剂卡片没有更新成功，下方是 {utcStamp(insights.report_generated_at)} 的卡片；费率和 OI 以“全部市场”页为准。
           </p>
         )}
         <VenueFilter counts={counts}>
           {items.length === 0 ? (
-            <p className="px-5 py-10 text-center text-[14px] text-ink-3">本期没有{side === "negative" ? "负" : "正"}费率市场。</p>
+            <p className="px-5 py-10 text-center text-[14px] text-ink-3">目前没有{side === "negative" ? "负" : "正"}费率市场。</p>
           ) : (
             items.map((item) => (
               <InsightCard key={item.key} item={item} slug={marketSlug(item.venue, item.ticker)} asOf={asOf} />

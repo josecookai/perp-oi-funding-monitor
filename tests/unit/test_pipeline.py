@@ -158,3 +158,33 @@ def test_all_venues_failing_persists_nothing(root: Path) -> None:
     assert len(outcome.errors) == 2
     assert outcome.run_id is None and outcome.md_path is None
     assert not (root / "reports" / "latest.md").exists()
+
+
+def test_hourly_runs_compare_with_the_run_a_full_window_ago(root: Path) -> None:
+    # Runs every hour from T0; the T8 run must compare with T0 (8h), not T1 (7h).
+    for hour in range(8):
+        run(root, now=T0 + timedelta(hours=hour))
+    outcome = run(root, now=T8)
+    hl = outcome.report.section(Venue.HYPERLIQUID)
+    assert hl.window.hours == pytest.approx(8)
+    assert hl.window.in_range
+
+
+def test_no_archive_writes_only_latest(root: Path) -> None:
+    cfg = load_config(root, {})
+    bn, hl = clients()
+    with SnapshotStore(cfg.db_path) as store:
+        outcome = run_cycle(
+            cfg, binance=bn, hyperliquid=hl, store=store, now=T8, manual=False, archive=False
+        )
+    assert outcome.run_id == 1
+    assert outcome.md_path == root / "reports" / "latest.md"
+    assert not (root / "reports" / "2026-11-24").exists()
+
+
+def test_prior_min_age_uses_small_slack() -> None:
+    from perp_monitor.pipeline import prior_min_age
+
+    assert prior_min_age(load_config(Path("/tmp"), {})) == pytest.approx(7.75)
+    tight = load_config(Path("/tmp"), {"WINDOW_TOLERANCE_HOURS": "0.1"})
+    assert prior_min_age(tight) == pytest.approx(7.9)

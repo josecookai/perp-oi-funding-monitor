@@ -13,3 +13,5 @@ logs/
 data/cache/
 .vercel
 .env*.local
+# Dashboard data is generated hourly and deployed from the server, not committed.
+web/data/

@@ -30,6 +30,8 @@ from perp_monitor.store import SnapshotStore
 
 log = logging.getLogger(__name__)
 
+PRIOR_SLACK_HOURS = 0.25
+
 
 @dataclass(frozen=True, slots=True)
 class Universe:
@@ -131,8 +133,7 @@ def _venue_input(
 
     if fetch.error:
         return VenueInput(fetch.venue, fetch.label, (), window(None, None), fetch.error)
-    min_age = max(config.expected_window_hours - config.window_tolerance_hours, 0)
-    stored = store.latest_prior(fetch.venue, before=now, min_age_hours=min_age)
+    stored = store.latest_prior(fetch.venue, before=now, min_age_hours=prior_min_age(config))
     if stored is not None:
         prior_at, points = stored
         return VenueInput(
@@ -157,6 +158,17 @@ def _venue_input(
     )
 
 
+def prior_min_age(config: Config) -> float:
+    """How old the comparison run must be.
+
+    Runs happen hourly, so "at least EXPECTED - TOLERANCE old" would pick a 7h-old run.
+    A 15-minute slack picks the run closest to a full window while still letting a
+    manual run just before a scheduled one keep the scheduled run's window intact.
+    """
+    slack = min(config.window_tolerance_hours, PRIOR_SLACK_HOURS)
+    return max(config.expected_window_hours - slack, 0.0)
+
+
 def _write_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -164,16 +176,19 @@ def _write_atomic(path: Path, text: str) -> None:
     os.replace(tmp, path)
 
 
-def write_outputs(reports_dir: Path, now: datetime, markdown: str, data: dict) -> tuple[Path, Path]:
-    stem = reports_dir / now.strftime("%Y-%m-%d") / now.strftime("%H%MZ")
-    md_path, json_path = stem.with_suffix(".md"), stem.with_suffix(".json")
+def write_outputs(
+    reports_dir: Path, now: datetime, markdown: str, data: dict, archive: bool = True
+) -> tuple[Path, Path]:
+    """Write latest.md/json, plus a dated copy under reports/YYYY-MM-DD/ when archiving."""
+    latest_md, latest_json = reports_dir / "latest.md", reports_dir / "latest.json"
     payload = json.dumps(data, indent=1) + "\n"
-    for path, text in (
-        (md_path, markdown),
-        (json_path, payload),
-        (reports_dir / "latest.md", markdown),
-        (reports_dir / "latest.json", payload),
-    ):
+    outputs = [(latest_md, markdown), (latest_json, payload)]
+    md_path, json_path = latest_md, latest_json
+    if archive:
+        stem = reports_dir / now.strftime("%Y-%m-%d") / now.strftime("%H%MZ")
+        md_path, json_path = stem.with_suffix(".md"), stem.with_suffix(".json")
+        outputs = [(md_path, markdown), (json_path, payload), *outputs]
+    for path, text in outputs:
         _write_atomic(path, text)
     return md_path, json_path
 
@@ -187,6 +202,7 @@ def run_cycle(
     now: datetime,
     manual: bool,
     persist: bool = True,
+    archive: bool = True,
 ) -> RunOutcome:
     universe = load_universe(config)
     fetches = _fetch_all(config, universe, binance, hyperliquid)
@@ -221,7 +237,7 @@ def run_cycle(
         # while a written report without a stored run would widen the next window.
         run_id = store.record_run(now, manual, snapshots)
         md_path, json_path = write_outputs(
-            config.reports_dir, now, markdown, report_to_json(report)
+            config.reports_dir, now, markdown, report_to_json(report), archive=archive
         )
     errors = tuple(f"{f.label}: {f.error}" for f in fetches if f.error)
     return RunOutcome(report, markdown, telegram, md_path, json_path, run_id, errors)

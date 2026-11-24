@@ -60,7 +60,7 @@ export function RailNav() {
       </div>
       <div className="flex items-center gap-2 px-3">
         <ThemeToggle />
-        <span className="text-[11px] text-ink-3">每 8 小时更新</span>
+        <span className="text-[11px] text-ink-3">每小时更新</span>
       </div>
     </aside>
   );

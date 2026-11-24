@@ -1,3 +1,4 @@
-# perp-oi-funding-monitor: every 8 hours at 00:00, 08:00 and 16:00 UTC.
+# perp-oi-funding-monitor: every hour. At 00/08/16 UTC run_and_push.sh also sends the
+# Telegram report and pushes reports/ to git; every run deploys the dashboard.
 # The script appends to logs/cron.log itself. The server clock must be UTC (check `date`).
-0 0,8,16 * * * /path/to/perp-oi-funding-monitor/scheduler/run_and_push.sh
+0 * * * * /path/to/perp-oi-funding-monitor/scheduler/run_and_push.sh

@@ -25,14 +25,14 @@ export default function AboutPage() {
       <div className="max-w-3xl space-y-4 px-4 py-4 sm:px-5">
         <Block title="数据从哪来">
           <p>
-            每 8 小时（UTC 00:00 / 08:00 / 16:00）抓一次 Binance USDT 本位美股永续（EQUITY 类型）和 Hyperliquid HIP-3
-            的 xyz 市场。只收美股个股和 ADR（白名单 {report.allowlist_size} 只），不含 ETF、杠杆 ETF、加密货币。
+            每小时抓一次 Binance USDT 本位美股永续（EQUITY 类型）和 Hyperliquid HIP-3
+            的 xyz 市场，网站随之更新；OI 变化都是和约 8 小时前那次相比（滚动 8 小时）。Telegram 报告仍是每 8 小时一份（UTC 00:00 / 08:00 / 16:00）。只收美股个股和 ADR（白名单 {report.allowlist_size} 只），不含 ETF、杠杆 ETF、加密货币。
           </p>
           <p>
             催化剂卡片：公司资料、现货价格和成交量、财报日历来自 Nasdaq；新闻来自 Yahoo Finance；公告来自 SEC EDGAR；空头持仓来自 FINRA（每月两次）；7 天资金费率历史来自两家交易所的结算记录。
           </p>
           <p className="num text-[12px] text-ink-3">
-            本期报告 {utcStamp(report.generated_at)} · 卡片 {utcStamp(insights.generated_at)} · 网站构建 {utcStamp(meta.built_at)}
+            最新快照 {utcStamp(report.generated_at)} · 卡片 {utcStamp(insights.generated_at)} · 网站构建 {utcStamp(meta.built_at)}
           </p>
         </Block>
         <Block title="资金费率">

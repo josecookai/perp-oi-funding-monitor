@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s · Stock Perp Radar",
   },
   description:
-    "Binance 与 Hyperliquid 美股永续合约：资金费率、OI 变化、催化剂与交易量是否有意义，每 8 小时更新。",
+    "Binance 与 Hyperliquid 美股永续合约：资金费率、OI 变化、催化剂与交易量是否有意义，每小时更新。",
 };
 
 // Runs before paint so the saved theme never flashes.

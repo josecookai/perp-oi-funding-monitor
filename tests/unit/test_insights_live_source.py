@@ -178,3 +178,17 @@ def test_today_is_the_us_eastern_date(tmp_path: Path, counted: Counter[str]) -> 
         sec_user_agent="test agent@example.com",
     )
     assert source.today == date(2026, 11, 24)
+
+
+def test_earnings_and_short_interest_are_cached(tmp_path: Path, counted: Counter[str]) -> None:
+    source, cache = make(tmp_path, counted)
+    first = source.earnings(["MDT"])
+    source.short_interest(["CVNA", "BOT"])
+    cache.save()
+    again, _ = make(tmp_path, counted)
+    assert again.earnings(["MDT"]) == first
+    si = again.short_interest(["BOT", "CVNA"])
+    assert si["BOT"].shares == 1_298_082
+    # 16 weekdays the first time; only the day that failed (503) is fetched again.
+    assert counted["api.nasdaq.com/api/calendar/earnings"] == 17
+    assert counted["api.finra.org/data/group/otcMarket/name/consolidatedShortInterest"] == 1

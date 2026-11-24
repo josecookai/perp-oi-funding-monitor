@@ -13,13 +13,13 @@ export default function OiPage() {
       <PageHeader title="OI 变动" />
       <MobileTitle title="OI 变动" />
       <p className="px-4 pt-3 text-[13px] text-ink-2 sm:px-5">
-        与上一期（约 8 小时前）相比的持仓变化，按美元 ΔOI 排名。Δ合约数 % 剔除了价格涨跌的影响：合约数增加才说明真有新仓位进场。
+        与约 8 小时前相比的持仓变化（每小时滚动更新），按美元 ΔOI 排名。Δ合约数 % 剔除了价格涨跌的影响：合约数增加才说明真有新仓位进场。
       </p>
       <div className="space-y-6 px-4 py-4 sm:px-5">
         {VENUES.map((venue) => {
           const s = section(venue);
           if (!s) return null;
-          const empty = s.error ? `本期失败：${s.error}` : "首期运行，下一期开始有变化数据。";
+          const empty = s.error ? `本次抓取失败：${s.error}` : "数据积累中，8 小时后开始有变化数据。";
           return (
             <section key={venue} className="card overflow-hidden">
               <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">

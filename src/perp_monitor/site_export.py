@@ -17,7 +17,7 @@ from typing import Any
 from perp_monitor.store import HistoryRow, HistoryRun
 
 SCHEMA_VERSION = 1
-HISTORY_DAYS = 30
+HISTORY_DAYS = 14  # hourly runs: 336 points per market
 HISTORY_FIELDS = ("run", "funding_8h", "oi_usd", "price", "volume_24h_usd")
 
 

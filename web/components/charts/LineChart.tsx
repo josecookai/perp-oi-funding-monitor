@@ -22,7 +22,7 @@ export function LineChart({
   if (points.length < 2) {
     return (
       <div className="grid h-[120px] place-items-center rounded-lg bg-card-soft text-[12px] text-ink-3">
-        历史数据积累中（每 8 小时一个点）
+        历史数据积累中（每小时一个点）
       </div>
     );
   }

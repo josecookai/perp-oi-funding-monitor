@@ -74,7 +74,7 @@ export default async function MarketPage({ params }: PageProps<"/t/[slug]">) {
           <span className={`tone-${tone(row.funding_apr)}`}>{pct(row.funding_apr, 0)}</span>
         </Stat>
         <Stat label="持仓 OI">{usdZh(row.oi_usd)}</Stat>
-        <Stat label="ΔOI（本期）">
+        <Stat label="ΔOI（近 8h）">
           <span className={`tone-${tone(row.d_oi_usd)}`}>{usdDelta(row.d_oi_usd)}</span>
         </Stat>
         <Stat label="标记价">{price(row.mark_price)}</Stat>
@@ -91,7 +91,7 @@ export default async function MarketPage({ params }: PageProps<"/t/[slug]">) {
           {funding.length > 1 ? (
             <FundingBars bars={funding} width={Math.max(320, funding.length * 10)} height={90} label={`${ticker} 每期资金费率`} />
           ) : (
-            <p className="text-[12px] text-ink-3">历史数据积累中（每 8 小时一个点）。下方卡片里的 7 天柱状图来自交易所的历史结算记录。</p>
+            <p className="text-[12px] text-ink-3">历史数据积累中（每小时一个点）。下方卡片里的 7 天柱状图来自交易所的历史结算记录。</p>
           )}
         </div>
       </section>
@@ -105,12 +105,12 @@ export default async function MarketPage({ params }: PageProps<"/t/[slug]">) {
 
       {insight ? (
         <section className="card mt-4 overflow-hidden">
-          <h2 className="px-5 pt-4 text-[15px] font-extrabold">本期催化剂卡片</h2>
+          <h2 className="px-5 pt-4 text-[15px] font-extrabold">催化剂卡片</h2>
           <InsightCard item={insight} slug={marketSlug(venue, ticker)} asOf={insights.market_date} />
         </section>
       ) : (
         <p className="mt-4 text-[12px] text-ink-3">
-          这只票本期不在资金费率正负 Top 10 里，所以没有生成催化剂卡片。
+          这只票目前不在资金费率正负 Top 10 里，所以没有生成催化剂卡片。
         </p>
       )}
     </div>

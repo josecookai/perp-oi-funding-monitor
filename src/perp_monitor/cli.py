@@ -55,6 +55,11 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--no-store", action="store_true", help="dry run: print the report, write and store nothing"
     )
+    run.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="store the run and refresh reports/latest.*, but skip the dated report copy",
+    )
     site = sub.add_parser("site", help="write dashboard data: report, history, insights")
     site.add_argument(
         "--skip-insights", action="store_true", help="keep the previous insights.json"
@@ -119,6 +124,7 @@ def _run(args: argparse.Namespace, config: Config, http: httpx.Client) -> int:
                 now=now,
                 manual=args.manual,
                 persist=not args.no_store,
+                archive=not args.no_archive,
             )
     except CryptoLeakError as exc:
         log.critical("run aborted, nothing stored or sent: %s", exc)

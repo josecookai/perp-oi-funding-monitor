@@ -30,6 +30,8 @@ PROFILE_TTL = timedelta(days=7)
 MISSING_PROFILE_TTL = timedelta(days=1)
 CIK_TTL = timedelta(days=7)
 SHARES_TTL = timedelta(days=3)
+EARNINGS_DAY_TTL = timedelta(hours=6)
+SHORT_INTEREST_TTL = timedelta(hours=12)
 NEWS_LOOKBACK = timedelta(days=7)
 FILINGS_LOOKBACK_DAYS = 14
 EARNINGS_WINDOW = (-7, 14)  # calendar days around today
@@ -144,7 +146,7 @@ class LiveSource:
             if day.weekday() >= 5:
                 continue
             try:
-                calendar = nasdaq.fetch_earnings_day(self._http, day, policy=POLICY)
+                calendar = self._earnings_day(day)
             except HttpError as exc:
                 log.warning("earnings calendar %s: %s", day, exc)
                 continue
@@ -153,8 +155,49 @@ class LiveSource:
                     found[symbol] = event
         return found
 
+    def _earnings_day(self, day: date) -> dict[str, EarningsDate]:
+        key = f"earnings:{day.isoformat()}"
+        cached = self._cache.get(key, EARNINGS_DAY_TTL)
+        if isinstance(cached, dict):
+            return {
+                s: EarningsDate(date.fromisoformat(v["day"]), v.get("timing"))
+                for s, v in cached.items()
+            }
+        calendar = nasdaq.fetch_earnings_day(self._http, day, policy=POLICY)
+        self._cache.put(
+            key, {s: {"day": e.day.isoformat(), "timing": e.timing} for s, e in calendar.items()}
+        )
+        return calendar
+
     def short_interest(self, tickers: Iterable[str]) -> Mapping[str, ShortInterest]:
-        return finra.fetch_short_interest(self._http, tickers, self.today, policy=POLICY)
+        wanted = sorted(set(tickers))
+        key = "finra:" + ",".join(wanted)
+        cached = self._cache.get(key, SHORT_INTEREST_TTL)
+        if isinstance(cached, dict):
+            return {
+                s: ShortInterest(
+                    date.fromisoformat(v["settlement_date"]),
+                    v["shares"],
+                    v["prev_shares"],
+                    v["days_to_cover"],
+                    None,
+                )
+                for s, v in cached.items()
+            }
+        found = finra.fetch_short_interest(self._http, wanted, self.today, policy=POLICY)
+        self._cache.put(
+            key,
+            {
+                s: {
+                    "settlement_date": si.settlement_date.isoformat(),
+                    "shares": si.shares,
+                    "prev_shares": si.prev_shares,
+                    "days_to_cover": si.days_to_cover,
+                }
+                for s, si in found.items()
+            },
+        )
+        return found
 
     def funding_history(
         self, venue: str, market: str, interval_hours: float

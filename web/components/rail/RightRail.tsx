@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FundingTreemap, type TreemapMarket } from "@/components/charts/FundingTreemap";
 import { TickerAvatar, VenueChip } from "@/components/ui/Badges";
 import { VENUES, marketSlug, report, section } from "@/lib/data";
-import { pct, tone, usdDelta, usdZh, utcStamp } from "@/lib/format";
+import { hktStamp, pct, tone, usdDelta, usdZh, utcStamp } from "@/lib/format";
 import type { ReportRow, Venue } from "@/lib/types";
 
 const HEATMAP_PER_VENUE = 24;
@@ -13,7 +13,7 @@ function Snapshot() {
     <section className="card p-4">
       <h2 className="text-[15px] font-extrabold">最新快照</h2>
       <div className="num mt-1 text-[12px] text-ink-3">
-        {utcStamp(report.generated_at)}
+        {utcStamp(report.generated_at)} · 香港 {hktStamp(report.generated_at)}
         {report.manual ? " · 手动" : ""}
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-3">

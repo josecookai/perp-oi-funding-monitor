@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { RightRail } from "@/components/rail/RightRail";
+import { UpdatedAt } from "@/components/ui/UpdatedAt";
 import { MobileTitle, PageHeader } from "@/components/ui/PageHeader";
 import { feedPath, insights, insightsFor, marketSlug, meta, report } from "@/lib/data";
 import { usdZh, utcStamp } from "@/lib/format";
@@ -47,9 +48,10 @@ export function FeedPage({ side, bucket }: { side: Side; bucket: Bucket }) {
             { href: feedPath("negative", bucket), label: "负费率 Top 10", active: side === "negative" },
             { href: feedPath("positive", bucket), label: "正费率 Top 10", active: side === "positive" },
           ]}
-          aside={<span className="num">更新于 {utcStamp(insights.generated_at)}</span>}
+          aside={<UpdatedAt iso={insights.generated_at} className="text-right" />}
         />
         <MobileTitle title={`${BUCKET_TITLE[bucket]} · ${sideTitle} Top 10`} />
+        <UpdatedAt iso={insights.generated_at} className="px-4 pt-1 text-[12px] text-ink-3 lg:hidden" />
         <p className="px-4 pt-3 text-[13px] text-ink-2 sm:px-5">
           {bucketText(bucket)}
           {SIDE_TEXT[side]}每张卡片回答 5 个问题：这是什么公司、费率是否持续、最近有什么催化剂、交易量够不够大、是不是热门做空股。

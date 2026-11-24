@@ -69,6 +69,21 @@ export function utcStamp(iso: string | null | undefined): string {
   return `${UTC_FMT.format(new Date(iso)).replace(/\//g, "/")} UTC`;
 }
 
+const HKT_FMT = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Hong_Kong",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+/** "11/24 13:13" in Hong Kong time (UTC+8). */
+export function hktStamp(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return HKT_FMT.format(new Date(iso));
+}
+
 export function monthDay(isoDate: string): string {
   const [, m, d] = isoDate.slice(0, 10).split("-");
   return `${m}/${d}`;

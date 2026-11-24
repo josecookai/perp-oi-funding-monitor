@@ -188,7 +188,8 @@ class TestAnswers:
 class TestCompanyAndEarnings:
     def test_usd_zh_trillions(self) -> None:
         assert usd_zh(4.3e12) == "$4.30万亿"
-        assert usd_zh(3.03e11) == "$3,030.0亿"
+        assert usd_zh(3.03e11) == "$3,030亿"
+        assert usd_zh(2.9e10) == "$290.0亿"
 
     def test_what_in_chinese_with_fundamentals(self) -> None:
         profile = Profile(
@@ -202,7 +203,7 @@ class TestCompanyAndEarnings:
         f = Fundamentals(4.3e12, 2.0e11, 1.5e11, date(2026, 7, 26), 4)
         what = dict(answers(base(profile=profile, fundamentals=f)))["what"]
         assert what.startswith("英伟达（NVIDIA Corporation）：全球最大的 AI 芯片设计公司。")
-        assert "市值 $4.30万亿" in what and "近四季营收 $2,000.0亿" in what
+        assert "市值 $4.30万亿" in what and "近四季营收 $2,000亿" in what
         assert "毛利率 75.0%" in what and "财报截至 2026/07" in what
 
     def test_what_without_financials_says_so(self) -> None:
@@ -224,3 +225,11 @@ class TestCompanyAndEarnings:
         last = LastEarnings(date(2026, 9, 1), "Jul 2026", 1.45, 1.39, 4.32)
         text = dict(answers(base(catalysts=Catalysts(last_earnings=last))))["catalyst"]
         assert "上次财报 09/01（周二）（Jul 2026 季度） EPS 1.45 vs 预期 1.39，超预期 4.3%" in text
+
+
+def test_spike_multiple_only_when_meaningful() -> None:
+    pts = tuple(FundingPoint(NOW - timedelta(hours=8 * i), 0.0) for i in range(3))
+    low = FundingPersistence(FundingPattern.SPIKE, pts, 0.1, 0.0, 1.2)
+    high = FundingPersistence(FundingPattern.SPIKE, pts, 0.1, 0.0, 6.0)
+    assert "倍" not in dict(answers(base(persistence=low)))["funding"]
+    assert "平均水平的 6 倍" in dict(answers(base(persistence=high)))["funding"]

@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 class ZhEntry:
     name: str
     description: str
+    en: str | None = None  # replaces the English description when the source is wrong
 
 
 def load_company_zh(path: Path) -> dict[str, ZhEntry]:
@@ -37,15 +38,17 @@ def load_company_zh(path: Path) -> dict[str, ZhEntry]:
         if not isinstance(entry, dict):
             continue
         name, desc = str(entry.get("name") or "").strip(), str(entry.get("desc") or "").strip()
+        en = str(entry.get("en") or "").strip() or None
         if name and desc:
-            out[ticker.upper()] = ZhEntry(name, desc)
+            out[ticker.upper()] = ZhEntry(name, desc, en)
     return out
 
 
 def with_zh(profile: Profile | None, entry: ZhEntry | None) -> Profile | None:
     if profile is None or entry is None:
         return profile
-    return replace(profile, name_zh=entry.name, description_zh=entry.description)
+    updated = replace(profile, name_zh=entry.name, description_zh=entry.description)
+    return replace(updated, description=entry.en) if entry.en else updated
 
 
 def missing(tickers: Mapping[str, object] | list[str], zh: Mapping[str, ZhEntry]) -> list[str]:

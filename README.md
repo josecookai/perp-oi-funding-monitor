@@ -14,11 +14,14 @@ change). It publishes:
   pages. **量有意义** (home) ranks funding only among markets with OI ≥ $1M and 24h volume
   ≥ $1M. **量没意义** ranks the rest separately. Each page shows a top 10 per venue and per
   funding sign, and each card answers five questions:
-  1. **What is this company?** Profile, sector and industry.
+  1. **What is this company?** A Chinese and an English description, plus market cap,
+     trailing four-quarter revenue and gross margin.
   2. **Is the funding skew persistent or a one-off spike?** Based on 7 days of the
      venue's own settled funding, in 8h buckets.
-  3. **What are the recent catalysts?** Earnings dates, SEC 8-K items, offerings and
-     periodic reports, relevant news, and spot moves over 1, 5 and 20 days.
+  3. **What are the recent catalysts?** The next earnings date with its weekday and
+     pre-market/after-hours timing (or an estimate marked unconfirmed), last quarter's EPS
+     against consensus, SEC 8-K items, offerings and periodic reports, relevant news, and
+     spot moves over 1, 5 and 20 days.
   4. **Is the perp volume meaningful?** OI, 24h volume, and OI as a share of the
      stock's average daily dollar volume.
   5. **Is it a crowded short?** FINRA short interest as a share of shares outstanding,
@@ -244,15 +247,35 @@ the stock is a crowded short. Sources, all public and keyless:
 
 | Data | Source | Cache |
 |---|---|---|
-| Company profile, market cap | Nasdaq `api.nasdaq.com` (`/company/{s}/company-profile`, `/quote/{s}/summary`) | 7 days / 20 h |
+| Company profile, market cap and shares | Nasdaq `api.nasdaq.com` (`/company/{s}/company-profile`, `/quote/{s}/summary`, `/quote/{s}/info`) | 30 days / 3 days, company DB |
 | Daily bars (returns, 20-session dollar volume) | Nasdaq `/quote/{s}/historical` | none |
-| Earnings dates (−7 to +14 days) | Nasdaq `/calendar/earnings?date=` | 6 h per day |
+| Earnings dates (−7 to +35 days, with pre-market/after-hours) | Nasdaq `/calendar/earnings?date=` | 6 h per day |
+| Last earnings (EPS vs consensus); next-date estimate = last report + 91 days when the calendar has no date | Nasdaq `/company/{s}/earnings-surprise` | 1 day, company DB |
+| TTM revenue and gross profit (sum of the latest 4 quarters, in thousands × 1000) | Nasdaq `/company/{s}/financials?frequency=2` | 7 days, company DB |
+| Chinese name and description | `assets/company_zh.json`, curated in the repo | — |
 | News (last 7 days) | Yahoo Finance RSS, kept only if the headline or summary names the ticker or company | none |
 | Filings (last 14 days): 8-K items, 424B offerings, 10-Q/K, 6-K | SEC `data.sec.gov/submissions` | CIK map 7 days |
 | Short interest | FINRA consolidated short interest (twice monthly) | 12 h |
 | 7-day funding history | Binance `/fapi/v1/fundingRate`, Hyperliquid `fundingHistory` | none |
 
-The cache lives in `data/cache/insights.json` (git-ignored). A failed source is recorded
+Company facts live in a local SQLite database, `data/companies.db` (git-ignored), with one
+timestamp per group of columns, so a profile is fetched monthly and financials weekly, not
+on every hourly run. Funds and foreign filers that Nasdaq has no statements for are stored
+as known-missing, so they are not refetched every hour either.
+
+```bash
+.venv/bin/perp-monitor companies status         # coverage: Chinese entries, profiles, financials
+.venv/bin/perp-monitor companies refresh        # fill stale entries for the whole allowlist
+.venv/bin/perp-monitor companies refresh NVDA   # or for some tickers
+sqlite3 data/companies.db "select ticker, name, market_cap_usd, revenue_ttm_usd from companies"
+```
+
+`assets/company_zh.json` holds a Chinese name and a one-line description per allowlisted
+ticker (a test checks coverage). An entry can also carry `en` to replace a wrong English
+description from the source. Add an entry whenever a ticker joins the allowlist.
+
+Short-lived API results (CIK map, earnings calendar days, FINRA) are cached in
+`data/cache/insights.json` (git-ignored). A failed source is recorded
 on the card (`errors`) and the card is still built. If the whole step fails, the previous
 `insights.json` is kept and the site shows a notice.
 

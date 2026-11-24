@@ -278,3 +278,23 @@ def test_cards_carry_fundamentals_and_english_summary() -> None:
     assert card.catalysts.last_earnings is not None
     data = bundle_to_json(bundle)["items"][0]
     assert data["fundamentals"]["gross_margin"] == pytest.approx(0.4)
+
+
+def test_company_zh_file_covers_the_allowlist() -> None:
+    from perp_monitor.allowlist import load_allowlist
+    from perp_monitor.insights.company_zh import load_company_zh, missing
+    from tests.conftest import ASSETS
+
+    zh = load_company_zh(ASSETS / "company_zh.json")
+    assert missing(sorted(load_allowlist(ASSETS / "stocks_allowlist.txt").tickers), zh) == []
+
+
+def test_zh_entry_can_override_a_wrong_english_description() -> None:
+    from perp_monitor.insights.company_zh import ZhEntry, with_zh
+
+    p = Profile("Applied Digital Corporation", None, None, "SkyAI is an AI company.")
+    out = with_zh(
+        p, ZhEntry("Applied Digital", "AI 数据中心开发商", "Applied Digital builds data centers.")
+    )
+    assert out is not None and out.description == "Applied Digital builds data centers."
+    assert with_zh(p, ZhEntry("x", "y")) == Profile(p.name, None, None, p.description, "x", "y")

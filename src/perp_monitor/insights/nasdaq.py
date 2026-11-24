@@ -138,13 +138,23 @@ def parse_financials(payload: Any, market_cap_usd: float | None) -> Fundamentals
     headers = table.get("headers") or {}
     rows = {str(r.get("value1")): r for r in table.get("rows") or ()}
     columns = [k for k in headers if k != "value1"][:TTM_QUARTERS]
+    revenue_row = rows.get("Total Revenue") or {}
+    # Newer companies have fewer reported quarters ("--"): use the latest run of them.
+    usable = []
+    for k in columns:
+        if parse_number(revenue_row.get(k)) is None:
+            break
+        usable.append(k)
+    if not usable:
+        return None
+    columns = usable
 
     def total(label: str) -> float | None:
         row = rows.get(label)
         if row is None:
             return None
         values = [parse_number(row.get(k)) for k in columns]
-        if not values or any(v is None for v in values):
+        if any(v is None for v in values):
             return None
         return sum(v for v in values if v is not None) * FINANCIALS_UNIT
 

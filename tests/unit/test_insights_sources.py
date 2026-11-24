@@ -301,3 +301,40 @@ def test_shares_and_multi_class_parsers() -> None:
     plain = {"data": {"stockType": "Common Stock", "companyName": "Medtronic plc Ordinary Shares"}}
     assert nasdaq.parse_multi_class(plain) is False
     assert nasdaq.parse_shares_outstanding({"data": None}) is None
+
+
+def test_financials_use_the_latest_reported_quarters() -> None:
+    payload = {
+        "data": {
+            "incomeStatementTable": {
+                "headers": {
+                    "value1": "Quarterly Ending:",
+                    "value2": "9/30/2026",
+                    "value3": "6/30/2026",
+                    "value4": "3/31/2026",
+                    "value5": "12/31/2025",
+                },
+                "rows": [
+                    {
+                        "value1": "Total Revenue",
+                        "value2": "$1,861",
+                        "value3": "$1,210",
+                        "value4": "--",
+                        "value5": "--",
+                    },
+                    {
+                        "value1": "Gross Profit",
+                        "value2": "$500",
+                        "value3": "$300",
+                        "value4": "--",
+                        "value5": "--",
+                    },
+                ],
+            }
+        }
+    }
+    f = nasdaq.parse_financials(payload, None)
+    assert f is not None and f.quarters == 2
+    assert f.revenue_ttm_usd == pytest.approx(3_071_000)
+    assert f.gross_margin == pytest.approx(800 / 3071)
+    assert f.period_end == date(2026, 9, 30)

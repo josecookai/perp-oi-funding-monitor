@@ -73,8 +73,10 @@ def _zh_amount(x: float) -> str:
         return f"{a / 1e4:.1f}万"
     if a < 1e8:
         return f"{a / 1e4:,.0f}万"
+    if a < 1e11:
+        return f"{a / 1e8:.1f}亿"
     if a < 1e12:
-        return f"{a / 1e8:,.1f}亿"
+        return f"{a / 1e8:,.0f}亿"
     return f"{a / 1e12:.2f}万亿"
 
 
@@ -227,7 +229,8 @@ def _funding(n: NarrativeInput) -> str:
             f"均值 {mean}，是持续的{crowd}拥挤。"
         )
     elif p.pattern is FundingPattern.SPIKE:
-        times = f"，当前值是平均水平的 {p.multiple_of_mean:.0f} 倍" if p.multiple_of_mean else ""
+        big = p.multiple_of_mean is not None and p.multiple_of_mean >= 2
+        times = f"，当前值是平均水平的 {p.multiple_of_mean:.0f} 倍" if big else ""
         tail = f"过去 7 天只有 {share} 的时段为{sign_word}{times}，属于单期异动。"
     elif p.pattern is FundingPattern.MIXED:
         tail = f"过去 7 天正负交替（同向时段占 {share}），方向不稳定。"

@@ -5,7 +5,8 @@ function zhAmount(x: number): string {
   if (a < 1e4) return a.toLocaleString("en-US", { maximumFractionDigits: 0 });
   if (a < 1e6) return `${(a / 1e4).toFixed(1)}万`;
   if (a < 1e8) return `${Math.round(a / 1e4).toLocaleString("en-US")}万`;
-  if (a < 1e12) return `${(a / 1e8).toLocaleString("en-US", { maximumFractionDigits: 1 })}亿`;
+  if (a < 1e11) return `${(a / 1e8).toFixed(1)}亿`;
+  if (a < 1e12) return `${Math.round(a / 1e8).toLocaleString("en-US")}亿`;
   return `${(a / 1e12).toFixed(2)}万亿`;
 }
 
